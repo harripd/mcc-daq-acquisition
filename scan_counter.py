@@ -18,7 +18,7 @@ ctrdev = dev.get_ctr_device()
 
 dev.connect()
 
-CHANNELS = 1 # 2
+CHANNELS = 2
 SAMPLES = 1000
 SAMPLES_PER_SECOND = 10**4
 
@@ -27,7 +27,7 @@ for i in range(CHANNELS*SAMPLES):
     buf[i] = -1
 
 
-START_CTR = 1
+START_CTR = 0
 END_CTR = START_CTR + (CHANNELS-1)
 
 for i in range(START_CTR, END_CTR+1):
@@ -90,6 +90,5 @@ ax1 = fig.add_subplot(1,1,1)
 for i in range(START_CTR, END_CTR+1):
     i -= START_CTR
     plt.bar(np.linspace(0,SAMPLES,SAMPLES)+0.2, myctr.vals[i], width=0.2)
-#    plt.bar(np.linspace(0,SAMPLES,SAMPLES)-0.2, myctr.vals[1], width=0.2)
 
 plt.show()
