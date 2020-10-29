@@ -3,6 +3,9 @@
 import time
 import uldaq
 
+import matplotlib
+matplotlib.use('GTK3Agg') 
+
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy as np
@@ -18,9 +21,11 @@ ctrdev = dev.get_ctr_device()
 
 dev.connect()
 
-CHANNELS = 2
-SAMPLES = 1000
-SAMPLES_PER_SECOND = 10**4
+CHANNELS = 1
+SECONDS = 5
+# SAMPLES = 5000
+SAMPLES_PER_SECOND = 10**3
+SAMPLES = SECONDS * SAMPLES_PER_SECOND
 
 buf = uldaq.create_int_buffer(CHANNELS, SAMPLES)
 for i in range(CHANNELS*SAMPLES):
@@ -41,54 +46,35 @@ for i in range(START_CTR, END_CTR+1):
             0, # DebounceTime -> ignored
             4) #4) # Flag -> 64Bit
 
-scanrate = ctrdev.c_in_scan(START_CTR, END_CTR, SAMPLES, SAMPLES_PER_SECOND, 0, 0, buf)
+scanrate = ctrdev.c_in_scan(
+        START_CTR,
+        END_CTR,
+        SAMPLES,
+        SAMPLES_PER_SECOND,
+        0, # ScanOption
+        0, # CInScanFlag
+        buf)
 
-print(f"Scanning with {scanrate}/s")
+print(f"Scanning {SAMPLES} in {SECONDS}s with {scanrate}/s")
+time.sleep(SECONDS + 1)
 
-class MyCounter:
-    def __init__(self, num_channels, num_samples):
-        self.vals = np.zeros([num_channels, num_samples])
-        self.idx_valid = 1
-        self.total = np.zeros((num_channels), dtype=int)
-        self.channels = num_channels
-        self.samples = num_samples
+npbuf = np.zeros([CHANNELS * SAMPLES])
+for (idx,val) in enumerate(buf):
+    npbuf[idx] = val
 
-    def reset(self):
-        self.vals.fill(0)
-        self.idx_valid = 1
-        self.total.fill(0)
-
-    def return_valid(self):
-        return self.vals[:,:idx_valid]
-
-    def update_from_uldaq_scan_buf(self, buf):
-        # Assertion: 0 is never a valid received counter value
-        for index in range(self.idx_valid*self.channels, (self.samples*self.channels)-1, self.channels):
-            if buf[index] == 2**64-1: break
-            for c in range(self.channels):
-                v = buf[index+c]
-                v -= self.total[c]
-                self.total[c] += v
-                self.vals[c, int(index/self.channels)] = v
-            self.idx_valid += 1
-
-
-myctr = MyCounter(CHANNELS, SAMPLES)
-# myctr.update_from_uldaq_scan_buf(buf)
-time.sleep(2)
-myctr.update_from_uldaq_scan_buf(buf)
-
-print(myctr.vals)
-print(",".join(map(str, buf)))
-
+npbuf = npbuf.reshape((CHANNELS, SAMPLES))
+print(npbuf)
 
 fig = plt.figure()
 ax1 = fig.add_subplot(1,1,1)
 
 # TODO: animation (for longer measurements)
 
+width = 0.9/CHANNELS
 for i in range(START_CTR, END_CTR+1):
     i -= START_CTR
-    plt.bar(np.linspace(0,SAMPLES,SAMPLES)+0.2, myctr.vals[i], width=0.2)
+    plt.bar(np.linspace(0,SAMPLES,SAMPLES)+width*i, npbuf[i], width=width)
+
+# np.savetxt("scan.csv", delimiter=",")
 
 plt.show()
