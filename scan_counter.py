@@ -24,8 +24,9 @@ dev.connect()
 CHANNELS = 1
 SECONDS = 5
 # SAMPLES = 5000
-SAMPLES_PER_SECOND = 10**3
-SAMPLES = SECONDS * SAMPLES_PER_SECOND
+SAMPLES_PER_SECOND = 10**5
+#SAMPLES = SECONDS * SAMPLES_PER_SECOND
+SAMPLES = 1000
 
 buf = uldaq.create_int_buffer(CHANNELS, SAMPLES)
 for i in range(CHANNELS*SAMPLES):
@@ -51,30 +52,46 @@ scanrate = ctrdev.c_in_scan(
         END_CTR,
         SAMPLES,
         SAMPLES_PER_SECOND,
-        0, # ScanOption
+        uldaq.ScanOption.CONTINUOUS, # ScanOption
         0, # CInScanFlag
         buf)
 
-print(f"Scanning {SAMPLES} in {SECONDS}s with {scanrate}/s")
-time.sleep(SECONDS + 1)
+print(f"Scanning {scanrate}/s samples continuously to {SAMPLES} buffer")
 
-npbuf = np.zeros([CHANNELS * SAMPLES])
-for (idx,val) in enumerate(buf):
-    npbuf[idx] = val
 
-npbuf = npbuf.reshape((CHANNELS, SAMPLES))
-print(npbuf)
+# TODO: the following code is not multichannel!!!
+
+# TODO: height
+npbuf = (SAMPLES_PER_SECOND / 250) * np.ones([SAMPLES])
 
 fig = plt.figure()
-ax1 = fig.add_subplot(1,1,1)
 
-# TODO: animation (for longer measurements)
-
-width = 0.9/CHANNELS
-for i in range(START_CTR, END_CTR+1):
-    i -= START_CTR
-    plt.bar(np.linspace(0,SAMPLES,SAMPLES)+width*i, npbuf[i], width=width)
+x = np.linspace(0, SAMPLES, SAMPLES)
+barcollection = plt.bar(x, npbuf)
 
 # np.savetxt("scan.csv", delimiter=",")
 
+#https://kb.mccdaq.com/KnowledgebaseArticle50758.aspx
+
+last_drawn_index = 0
+max_index = SAMPLES-1
+
+# TODO: needs red bar
+def animate(i):
+    global last_drawn_index
+    global max_index
+    (_, transferstatus) = ctrdev.get_scan_status()
+    last_valid_index = transferstatus.current_index - 1
+    if last_valid_index < last_drawn_index:
+        for i in range(last_drawn_index, max_index):
+            barcollection[i].set_height(buf[i])
+        last_drawn_index = 0
+    for i in range(last_drawn_index, last_valid_index):
+        barcollection[i].set_height(buf[i])
+    last_drawn_index = last_valid_index
+
+
+ani = animation.FuncAnimation(fig,animate,interval=1,blit=False)
 plt.show()
+
+ctrdev.scan_stop()
