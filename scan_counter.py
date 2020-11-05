@@ -3,12 +3,7 @@
 import time
 import uldaq
 
-import matplotlib
-matplotlib.use('GTK3Agg') 
-
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import numpy as np
+import visualize_vispy as visualizer_backend
 
 # [DaqDeviceDescriptor]
 [d] = uldaq.get_daq_device_inventory(uldaq.InterfaceType.USB)
@@ -59,10 +54,27 @@ scanrate = ctrdev.c_in_scan(
 print(f"Scanning {scanrate}/s samples continuously to {SAMPLES} buffer")
 
 
-# TODO: the following code is not multichannel!!!
 
+try:
+    visualizer_backend.visualize(buf, ctrdev, SAMPLES_PER_SECOND, SAMPLES)
+finally:
+    ctrdev.scan_stop()
+
+
+"""
+#visualize_matplotlib
+
+import matplotlib
+matplotlib.use('GTK3Agg') 
+
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy as np
+
+# TODO: the following code is not multichannel!!!
 # TODO: height
 npbuf = (SAMPLES_PER_SECOND / 250) * np.ones([SAMPLES])
+
 
 fig = plt.figure()
 
@@ -93,5 +105,4 @@ def animate(i):
 
 ani = animation.FuncAnimation(fig,animate,interval=1,blit=False)
 plt.show()
-
-ctrdev.scan_stop()
+"""
