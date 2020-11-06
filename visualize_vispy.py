@@ -60,12 +60,10 @@ class ScrollingImage(scene.Image):
 
     def _prepare_draw(self, view):
         # progressbar
-        self._ctex[:, (self.ptr + 1) % self._shape[1]] = np.full((self._shape[0], 1,1), 12345, dtype=np.float32)
-        self._ctex[:, (self.ptr + 2) % self._shape[1]] = np.full((self._shape[0], 1,1), 12345, dtype=np.float32)
-        self._ctex[:, (self.ptr + 3) % self._shape[1]] = np.full((self._shape[0], 1,1), 12345, dtype=np.float32)
-        self._ctex[:, (self.ptr + 4) % self._shape[1]] = np.full((self._shape[0], 1,1), 12345, dtype=np.float32)
-        self._ctex[:, (self.ptr + 5) % self._shape[1]] = np.full((self._shape[0], 1,1), 12345, dtype=np.float32)
-        self._ctex[:, (self.ptr + 6) % self._shape[1]] = np.full((self._shape[0], 1,1), 12345, dtype=np.float32)
+        from_ = (self.ptr + 1) % self._shape[1]
+        to_ = (self.ptr + 15) % self._shape[1]
+        if(to_ > from_):
+            self._ctex[:, from_:to_] = np.full((self._shape[0], 1,1), 12345, dtype=np.float32)
         if self._need_vertex_update:
             self._build_vertex_data()
 
@@ -75,20 +73,42 @@ class ScrollingImage(scene.Image):
 
 # 2000 height? well maybe..?
 # SAMPLES_PER_SECOND / 250 (?)
-HEIGHT = 1000
+HEIGHT = 5000
 WIDTH = 5000
+
+GRID_COLS=8
+GRID_ROWS=5
 
 def visualize(buf, ctrdev, SAMPLES_PER_SECOND, bufsize):
 
     win = scene.SceneCanvas(keys='interactive', show=True, fullscreen=False)
     grid = win.central_widget.add_grid()
 
-    view3 = grid.add_view(row=0, col=0, camera='panzoom', border_color='grey')
+    view3 = grid.add_view(
+                row=0,
+                col=1,
+                row_span=GRID_ROWS,
+                col_span=GRID_COLS,
+                camera='panzoom',
+                border_color='grey')
 
     #image = ScrollingImage((SAMPLES_PER_SECOND*5, HEIGHT), parent=view3.scene)
     image = ScrollingImage((HEIGHT, WIDTH), parent=view3.scene)
     view3.camera.rect = (0, 0, image.size[1], image.size[0])
     gridlines = scene.GridLines(color=(1, 1, 1, 1), parent=image)
+
+
+    # Add axes
+    yax = scene.AxisWidget(orientation='left')
+    ##yax.stretch = (0.05, 1)
+    grid.add_widget(yax, 0, 0, row_span=GRID_ROWS)
+    yax.link_view(view3)
+
+    xax = scene.AxisWidget(orientation='bottom')
+    #xax.stretch = (1, 0.05)
+    grid.add_widget(xax, GRID_ROWS, 1, col_span=GRID_COLS)
+    xax.link_view(view3)
+
 
     def makebar(i):
         print(i, end=',')
