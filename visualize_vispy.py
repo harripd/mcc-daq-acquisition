@@ -5,12 +5,11 @@ import atexit
 import numpy as np
 
 from vispy import app, scene, gloo, visuals
-# from vispy.util.filter import gaussian_filter
 
 
 rolling_tex = """
 float rolling_texture(vec2 pos) {
-    if( pos.x < 0 || pos.x > 1 || pos.y < 0 || pos.y > 1 ) {
+    if( pos.x < 0 || pos.x > 1 || pos.y < 0 || pos.y > 1) {
         return 0.0f;
     }
     vec2 uv = vec2(mod(pos.x, 1), pos.y);
@@ -49,21 +48,23 @@ class ScrollingImage(scene.Image):
     def size(self):
         return self._shape
 
-    def roll(self, data):
-        data = data.reshape(self._shape[0], 1, 1)
+    def add_bar(self, bar_height):
+        print(bar_height, end=',')
+        bar = np.zeros((self._shape[0],1,1), dtype=np.float32)
+        bar[0:bar_height] = 1
+        
+        self._ctex[:, self.ptr] = bar
 
-        self._ctex[:, self.ptr] = data
-
-#        self._color_fn['shift'] = (self.ptr+1) / self._shape[1]
         self.ptr = (self.ptr + 1) % self._shape[1]
         self.update()
 
     def _prepare_draw(self, view):
-        # progressbar
+        # hacky progressbar
         from_ = (self.ptr + 1) % self._shape[1]
         to_ = (self.ptr + 15) % self._shape[1]
         if(to_ > from_):
             self._ctex[:, from_:to_] = np.full((self._shape[0], 1,1), 12345, dtype=np.float32)
+
         if self._need_vertex_update:
             self._build_vertex_data()
 
@@ -71,9 +72,7 @@ class ScrollingImage(scene.Image):
             self._update_method(view)
 
 
-# 2000 height? well maybe..?
-# SAMPLES_PER_SECOND / 250 (?)
-HEIGHT = 5000
+HEIGHT = 10000
 WIDTH = 5000
 
 GRID_COLS=8
@@ -97,24 +96,19 @@ def visualize(buf, ctrdev, SAMPLES_PER_SECOND, bufsize):
     view3.camera.rect = (0, 0, image.size[1], image.size[0])
     gridlines = scene.GridLines(color=(1, 1, 1, 1), parent=image)
 
+    print(image.size)
 
     # Add axes
-    yax = scene.AxisWidget(orientation='left')
+    yax = scene.AxisWidget(orientation='left', axis_label="Counts")
     ##yax.stretch = (0.05, 1)
     grid.add_widget(yax, 0, 0, row_span=GRID_ROWS)
     yax.link_view(view3)
 
-    xax = scene.AxisWidget(orientation='bottom')
+    xax = scene.AxisWidget(orientation='bottom', axis_label=f"Time in ({SAMPLES_PER_SECOND})s",tick_label_margin=15)
     #xax.stretch = (1, 0.05)
     grid.add_widget(xax, GRID_ROWS, 1, col_span=GRID_COLS)
     xax.link_view(view3)
 
-
-    def makebar(i):
-        print(i, end=',')
-        z = np.zeros((HEIGHT,), dtype=np.float32)
-        z[0:i] = 1
-        return z
 
     last_update_idx = 0
     def update(ev):
@@ -128,18 +122,12 @@ def visualize(buf, ctrdev, SAMPLES_PER_SECOND, bufsize):
 
         if(transfer_idx < last_update_idx):
             for i in range(last_update_idx, bufsize):
-                image.roll(makebar(buf[i]))
+                image.add_bar(buf[i])
             last_update_idx = 0
         for i in range(last_update_idx, transfer_idx):
-            image.roll(makebar(buf[i]))
+            image.add_bar(buf[i])
         last_update_idx = transfer_idx
 
     timer = app.Timer(interval='auto', connect=update)
     timer.start()
     app.run()
-
-"""
-    print(last_valid_index)
-    for i in range(last_valid_index):
-        print(buf[i], end=',')
-"""
