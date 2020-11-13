@@ -3,7 +3,8 @@
 import time
 import uldaq
 
-import visualize_vispy as visualizer_backend
+#import visualize_vispy as visualizer_backend
+import visualize_vispy_lines as visualizer_backend
 
 # [DaqDeviceDescriptor]
 [d] = uldaq.get_daq_device_inventory(uldaq.InterfaceType.USB)
@@ -16,8 +17,8 @@ ctrdev = dev.get_ctr_device()
 
 dev.connect()
 
-CHANNELS = 1
-SECONDS = 5
+CHANNELS = 2
+# SECONDS = 5
 # SAMPLES = 5000
 SAMPLES_PER_SECOND = 10**3
 #SAMPLES = SECONDS * SAMPLES_PER_SECOND
@@ -33,7 +34,7 @@ END_CTR = START_CTR + (CHANNELS-1)
 
 for i in range(START_CTR, END_CTR+1):
     ctrdev.c_config_scan(
-            0,
+            i,
             uldaq.CounterMeasurementType.COUNT,
             uldaq.CounterMeasurementMode.CLEAR_ON_READ, # seems to have no effect though?!
             uldaq.CounterEdgeDetection.RISING_EDGE,
@@ -56,13 +57,13 @@ print(f"Scanning {scanrate}/s samples continuously to {SAMPLES} buffer")
 
 
 try:
-    visualizer_backend.visualize(buf, ctrdev, SAMPLES_PER_SECOND, SAMPLES)
+    visualizer_backend.visualize(buf, ctrdev, SAMPLES_PER_SECOND, SAMPLES, CHANNELS)
 finally:
     ctrdev.scan_stop()
 
 
 """
-#visualize_matplotlib
+#TODO: move to visualize_matplotlib
 
 import matplotlib
 matplotlib.use('GTK3Agg') 

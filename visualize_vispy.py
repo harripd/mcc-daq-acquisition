@@ -73,7 +73,7 @@ class ScrollingImage(scene.Image):
 
 
 HEIGHT = 10000
-WIDTH = 5000
+WIDTH = 10000
 
 GRID_COLS=8
 GRID_ROWS=5
