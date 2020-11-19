@@ -65,7 +65,7 @@ if os.name == "posix":
 elif os.name == "nt":
     # Windows setup code
     from mcculw import ul
-    from mcculw.enums import CounterChannelType, ScanOptions, CounterMode, FunctionType
+    from mcculw.enums import CounterChannelType, ScanOptions, CounterMode, FunctionType, InterfaceType, CounterEdgeDetection
     from mcculw.ul import ULError
     from mcculw.device_info import DaqDeviceInfo
 
@@ -78,10 +78,10 @@ elif os.name == "nt":
         raise ULError(ErrorCode.BADBOARD)
     ul.create_daq_device(board_num, devices[0])
 
-    self.device_info = DaqDeviceInfo(board_num)
-    counter_info = self.device_info.get_ctr_info()
+    device_info = DaqDeviceInfo(board_num)
+    counter_info = device_info.get_ctr_info()
 
-    memhandle = ul.win_buf_alloc_32(SAMPLES * NUM_CHANNELS)
+    memhandle = ul.win_buf_alloc_32(SAMPLES * CHANNELS)
 
     if not memhandle:
         raise Exception("Could not allocate memory")
@@ -97,7 +97,7 @@ elif os.name == "nt":
                 0, # tick_size
                 0) # mapped_channel (should be ignored by CounterMode)
 
-    scanrate = ul.c_in_scan(board_num, START_CTR, END_CTR, SAMPLES*NUM_CHANNELS,
+    scanrate = ul.c_in_scan(board_num, START_CTR, END_CTR, SAMPLES*CHANNELS,
                              SAMPLES_PER_SECOND, memhandle,
                              ScanOptions.BACKGROUND | ScanOptions.CONTINUOUS)
 
