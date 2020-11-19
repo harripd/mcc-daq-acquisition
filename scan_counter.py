@@ -69,6 +69,8 @@ elif os.name == "nt":
     from mcculw.ul import ULError
     from mcculw.device_info import DaqDeviceInfo
 
+    from ctypes import cast, POINTER, c_ulong
+
     board_num = 0
     
     # configure first detected device
@@ -102,17 +104,14 @@ elif os.name == "nt":
                              ScanOptions.BACKGROUND | ScanOptions.CONTINUOUS)
 
     def get_idx_fn():
-        (_,_, cur_idx, _) = ul.get_status(board_num, FunctionType.CTRFUNCTION)
+        (_,_, cur_idx) = ul.get_status(board_num, FunctionType.CTRFUNCTION)
         return cur_idx
 
     buf = cast(memhandle, POINTER(c_ulong))
 
 print(f"Scanning {scanrate}/s samples continuously to {SAMPLES} buffer")
 
-try:
-    visualizer_backend.visualize(buf, get_idx_fn, SAMPLES_PER_SECOND, SAMPLES, CHANNELS)
-finally:
-    ctrdev.scan_stop()
+visualizer_backend.visualize(buf, get_idx_fn, SAMPLES_PER_SECOND, SAMPLES, CHANNELS)
 
 
 """
