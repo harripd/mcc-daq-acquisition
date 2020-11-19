@@ -1,63 +1,116 @@
 #!/usr/bin/env python3
 
+import os
 import time
-import uldaq
 
-#import visualize_vispy as visualizer_backend
 import visualize_vispy_lines as visualizer_backend
 
-# [DaqDeviceDescriptor]
-[d] = uldaq.get_daq_device_inventory(uldaq.InterfaceType.USB)
 
-# DaqDevice
-dev = uldaq.DaqDevice(d)
-
-# CtrDevice
-ctrdev = dev.get_ctr_device()
-
-dev.connect()
-
+#TODO: Move to constants.py ?
+#      Or rather have them as parameters to both functions?
 CHANNELS = 2
 # SECONDS = 5
 # SAMPLES = 5000
 SAMPLES_PER_SECOND = 10**3
 #SAMPLES = SECONDS * SAMPLES_PER_SECOND
-SAMPLES = 1000
-
-buf = uldaq.create_int_buffer(CHANNELS, SAMPLES)
-for i in range(CHANNELS*SAMPLES):
-    buf[i] = -1
-
+SAMPLES = 1000 # actually really unecessary now, is only the 
 
 START_CTR = 0
 END_CTR = START_CTR + (CHANNELS-1)
 
-for i in range(START_CTR, END_CTR+1):
-    ctrdev.c_config_scan(
-            i,
-            uldaq.CounterMeasurementType.COUNT,
-            uldaq.CounterMeasurementMode.CLEAR_ON_READ, # seems to have no effect though?!
-            uldaq.CounterEdgeDetection.RISING_EDGE,
-            0, # CounterTickSize -> ignored
-            0, # DebounceMode -> NONE
-            0, # DebounceTime -> ignored
-            4) #4) # Flag -> 64Bit
+if os.name == "posix":
+    # Linux setup code
+    import uldaq
 
-scanrate = ctrdev.c_in_scan(
-        START_CTR,
-        END_CTR,
-        SAMPLES,
-        SAMPLES_PER_SECOND,
-        uldaq.ScanOption.CONTINUOUS, # ScanOption
-        0, # CInScanFlag
-        buf)
+    # [DaqDeviceDescriptor]
+    [d] = uldaq.get_daq_device_inventory(uldaq.InterfaceType.USB)
+
+    # DaqDevice
+    dev = uldaq.DaqDevice(d)
+
+    # CtrDevice
+    ctrdev = dev.get_ctr_device()
+
+    dev.connect()
+
+    buf = uldaq.create_int_buffer(CHANNELS, SAMPLES)
+    for i in range(CHANNELS*SAMPLES):
+        buf[i] = -1
+
+
+    for i in range(START_CTR, END_CTR+1):
+        ctrdev.c_config_scan(
+                i,
+                uldaq.CounterMeasurementType.COUNT,
+                uldaq.CounterMeasurementMode.CLEAR_ON_READ, # seems to have no effect though?!
+                uldaq.CounterEdgeDetection.RISING_EDGE,
+                0, # CounterTickSize -> ignored
+                0, # DebounceMode -> NONE
+                0, # DebounceTime -> ignored
+                4) # Flag -> 64Bit
+
+    scanrate = ctrdev.c_in_scan(
+            START_CTR,
+            END_CTR,
+            SAMPLES,
+            SAMPLES_PER_SECOND,
+            uldaq.ScanOption.CONTINUOUS, # ScanOption
+            0, # CInScanFlag
+            buf)
+
+    def get_idx_fn():
+        (_, transferstatus) = ctrdev.get_scan_status()
+        return transferstatus.current_index - 1
+
+elif os.name == "nt":
+    # Windows setup code
+    from mcculw import ul
+    from mcculw.enums import CounterChannelType, ScanOptions, CounterMode, FunctionType
+    from mcculw.ul import ULError
+    from mcculw.device_info import DaqDeviceInfo
+
+    board_num = 0
+    
+    # configure first detected device
+    ul.ignore_instacal()
+    devices = ul.get_daq_device_inventory(InterfaceType.USB)
+    if not devices:
+        raise ULError(ErrorCode.BADBOARD)
+    ul.create_daq_device(board_num, devices[0])
+
+    self.device_info = DaqDeviceInfo(board_num)
+    counter_info = self.device_info.get_ctr_info()
+
+    memhandle = ul.win_buf_alloc_32(SAMPLES * NUM_CHANNELS)
+
+    if not memhandle:
+        raise Exception("Could not allocate memory")
+
+    for i in range(START_CTR, END_CTR+1):
+        ul.c_config_scan(
+                board_num,
+                i,
+                CounterMode.CLEAR_ON_READ,
+                0, # debounce_time
+                0, # debounce_mode
+                CounterEdgeDetection.RISING_EDGE, 
+                0, # tick_size
+                0) # mapped_channel (should be ignored by CounterMode)
+
+    scanrate = ul.c_in_scan(board_num, START_CTR, END_CTR, SAMPLES*NUM_CHANNELS,
+                             SAMPLES_PER_SECOND, memhandle,
+                             ScanOptions.BACKGROUND | ScanOptions.CONTINUOUS)
+
+    def get_idx_fn():
+        (_,_, cur_idx, _) = ul.get_status(board_num, FunctionType.CTRFUNCTION)
+        return cur_idx
+
+    buf = cast(memhandle, POINTER(c_ulong))
 
 print(f"Scanning {scanrate}/s samples continuously to {SAMPLES} buffer")
 
-
-
 try:
-    visualizer_backend.visualize(buf, ctrdev, SAMPLES_PER_SECOND, SAMPLES, CHANNELS)
+    visualizer_backend.visualize(buf, get_idx_fn, SAMPLES_PER_SECOND, SAMPLES, CHANNELS)
 finally:
     ctrdev.scan_stop()
 

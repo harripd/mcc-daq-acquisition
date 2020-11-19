@@ -25,7 +25,7 @@ if(DUALCHANNEL):
     pos_red[:,1] = None
 
 
-def visualize(buf, ctrdev, SAMPLES_PER_SECOND, bufsize, num_channels):
+def visualize(buf, get_idx_fn, SAMPLES_PER_SECOND, bufsize, num_channels):
     if (num_channels == 2 and not DUALCHANNEL) or DUALCHANNEL and num_channels != 2:
         print("wrong setup: If you use 2 channels you have to set DUALCHANNEL and vice versa!")
         exit(0)
@@ -68,8 +68,7 @@ def visualize(buf, ctrdev, SAMPLES_PER_SECOND, bufsize, num_channels):
     last_update_idx = 0
     def update(ev):
         nonlocal last_update_idx, last_transfer_idx
-        (_, transferstatus) = ctrdev.get_scan_status()
-        transfer_idx = transferstatus.current_index - 1
+        transfer_idx = get_idx_fn()
         if transfer_idx % 2 != 0:
             #transfer of 1 channel is ahead, reading that sample next time
             transfer_idx -= 1
