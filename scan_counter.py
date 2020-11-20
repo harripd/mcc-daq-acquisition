@@ -65,11 +65,11 @@ if os.name == "posix":
 elif os.name == "nt":
     # Windows setup code
     from mcculw import ul
-    from mcculw.enums import CounterChannelType, ScanOptions, CounterMode, FunctionType, InterfaceType, CounterEdgeDetection
+    from mcculw.enums import CounterChannelType, ScanOptions, CounterMode, FunctionType, InterfaceType, CounterEdgeDetection, CounterDebounceTime, ErrorCode
     from mcculw.ul import ULError
     from mcculw.device_info import DaqDeviceInfo
 
-    from ctypes import cast, POINTER, c_ulong
+    from ctypes import cast, POINTER, c_ulong, c_ulonglong
 
     board_num = 0
     
@@ -82,8 +82,8 @@ elif os.name == "nt":
 
     device_info = DaqDeviceInfo(board_num)
     counter_info = device_info.get_ctr_info()
-
-    memhandle = ul.win_buf_alloc_32(SAMPLES * CHANNELS)
+    
+    memhandle = ul.win_buf_alloc_64(SAMPLES * CHANNELS)
 
     if not memhandle:
         raise Exception("Could not allocate memory")
@@ -93,21 +93,21 @@ elif os.name == "nt":
                 board_num,
                 i,
                 CounterMode.CLEAR_ON_READ,
-                0, # debounce_time
+                CounterDebounceTime.DEBOUNCE_NONE, # debounce_time
                 0, # debounce_mode
                 CounterEdgeDetection.RISING_EDGE, 
                 0, # tick_size
-                0) # mapped_channel (should be ignored by CounterMode)
+                i) # mapped_channel (should be ignored by CounterMode)
 
     scanrate = ul.c_in_scan(board_num, START_CTR, END_CTR, SAMPLES*CHANNELS,
                              SAMPLES_PER_SECOND, memhandle,
-                             ScanOptions.BACKGROUND | ScanOptions.CONTINUOUS)
+                             ScanOptions.BACKGROUND | ScanOptions.CONTINUOUS | ScanOptions.CTR64BIT)
 
     def get_idx_fn():
         (_,_, cur_idx) = ul.get_status(board_num, FunctionType.CTRFUNCTION)
         return cur_idx
 
-    buf = cast(memhandle, POINTER(c_ulong))
+    buf = cast(memhandle, POINTER(c_ulonglong))
 
 print(f"Scanning {scanrate}/s samples continuously to {SAMPLES} buffer")
 
