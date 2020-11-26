@@ -5,7 +5,7 @@ from vispy import gloo, app, visuals, scene
 
 # size of canvas
 # todo: how to set this, like really I dunno
-canvas_size = (3000, 800) # width,height
+canvas_size = (1000, 800) # width,height
 
 # vertex positions of data to draw
 N = canvas_size[0]
