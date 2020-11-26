@@ -5,18 +5,7 @@ import time
 
 import visualize_vispy_lines as visualizer_backend
 
-
-#TODO: Move to constants.py ?
-#      Or rather have them as parameters to both functions?
-CHANNELS = 2
-# SECONDS = 5
-# SAMPLES = 5000
-SAMPLES_PER_SECOND = 10**3
-#SAMPLES = SECONDS * SAMPLES_PER_SECOND
-SAMPLES = 1000 # actually really unecessary now, is only the 
-
-START_CTR = 0
-END_CTR = START_CTR + (CHANNELS-1)
+from config import *
 
 if os.name == "posix":
     # Linux setup code
@@ -111,51 +100,5 @@ elif os.name == "nt":
 
 print(f"Scanning {scanrate}/s samples continuously to {SAMPLES} buffer")
 
-visualizer_backend.visualize(buf, get_idx_fn, SAMPLES_PER_SECOND, SAMPLES, CHANNELS)
+visualizer_backend.visualize(buf, get_idx_fn)
 
-
-"""
-#TODO: move to visualize_matplotlib
-
-import matplotlib
-matplotlib.use('GTK3Agg') 
-
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import numpy as np
-
-# TODO: the following code is not multichannel!!!
-# TODO: height
-npbuf = (SAMPLES_PER_SECOND / 250) * np.ones([SAMPLES])
-
-
-fig = plt.figure()
-
-x = np.linspace(0, SAMPLES, SAMPLES)
-barcollection = plt.bar(x, npbuf)
-
-# np.savetxt("scan.csv", delimiter=",")
-
-#https://kb.mccdaq.com/KnowledgebaseArticle50758.aspx
-
-last_drawn_index = 0
-max_index = SAMPLES-1
-
-# TODO: needs red bar
-def animate(i):
-    global last_drawn_index
-    global max_index
-    (_, transferstatus) = ctrdev.get_scan_status()
-    last_valid_index = transferstatus.current_index - 1
-    if last_valid_index < last_drawn_index:
-        for i in range(last_drawn_index, max_index):
-            barcollection[i].set_height(buf[i])
-        last_drawn_index = 0
-    for i in range(last_drawn_index, last_valid_index):
-        barcollection[i].set_height(buf[i])
-    last_drawn_index = last_valid_index
-
-
-ani = animation.FuncAnimation(fig,animate,interval=1,blit=False)
-plt.show()
-"""

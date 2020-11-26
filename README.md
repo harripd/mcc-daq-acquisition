@@ -17,6 +17,4 @@ Then you can run the script by entering
 python scan_counter.py
 ```
 
-If you need to change the binning, see `scan_counter.py`, and change the `SAMPLES_PER_SECOND` variable.
-
-If you need to change the output image resolution see `vispy_visualize_lines.py` and set the `canvas_size` accordingly
+If you need to change any parameter, look in `config.py`
