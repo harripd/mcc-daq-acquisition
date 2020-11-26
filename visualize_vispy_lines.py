@@ -24,6 +24,36 @@ pos_red[:, 0] = np.linspace(0, N, N)
 pos_red[:,1] = None
 
 
+def transfer_data(buf, idx, transfer_from, transfer_to) -> int:
+    """
+    Transfers data to canvas buffer, starting from transfer_from to transfer_to
+    Returns new idx (to canvas) and sets pos_green, pos_red. 
+    """
+
+    # print("transferring from buf[", transfer_from, "to", transfer_to, "] to canvas[", idx, "]")
+
+    if(transfer_from == transfer_to):
+        # TODO: could we miss a whole cycle? Very low probability
+        return
+
+    if(transfer_to < transfer_from):
+        # Counter circled over the end of the buffer
+        # So process the end first
+        for i in range(transfer_from, SAMPLES, CHANNELS):
+            pos_green[idx,1] = buf[i]
+            pos_red[idx,1] = buf[i+1]
+            idx = (idx + 1) % N
+            #print("g:", buf[i],"\t", "r:", buf[i+1])
+        # Then start from the beginning for the rest
+        transfer_from = 0
+    for i in range(transfer_from, transfer_to, CHANNELS):
+        pos_green[idx,1] = buf[i]
+        pos_red[idx,1] = buf[i+1]
+        idx = (idx + 1) % N
+        #print("g:", buf[i],"\t", "r:", buf[i+1])
+    return idx
+
+
 def visualize(buf, get_idx_fn):
 
     win = scene.SceneCanvas(size=CANVAS_SIZE, keys='interactive', show=True, fullscreen=False)
@@ -60,31 +90,15 @@ def visualize(buf, get_idx_fn):
         nonlocal last_update_idx, last_transfer_idx
         transfer_idx = get_idx_fn()
         if transfer_idx % 2 != 0:
-            #transfer of 1 channel is ahead, reading that sample next time
+            # transfer of 1 channel is ahead, reading that sample next time
+            # this shouldn't happen but let's add it for sanity anyways
             transfer_idx -= 1
 
-        if(last_transfer_idx == transfer_idx):
-            # TODO: could we miss a whole cycle? Very low probability
-            return
-
-        # TODO: transfer data method
-        if(transfer_idx < last_transfer_idx):
-            for i in range(last_transfer_idx, SAMPLES, CHANNELS):
-                pos_green[last_update_idx,1] = buf[i]
-                pos_red[last_update_idx,1] = buf[i+1]
-                last_update_idx = (last_update_idx + 1) % N
-                #print("g:", buf[i],"\t", "r:", buf[i+1])
-            last_transfer_idx = 0
-        for i in range(last_transfer_idx, transfer_idx, CHANNELS):
-            pos_green[last_update_idx,1] = buf[i]
-            pos_red[last_update_idx,1] = buf[i+1]
-            last_update_idx = (last_update_idx + 1) % N
-            #print("g:", buf[i],"\t", "r:", buf[i+1])
+        last_update_idx = transfer_data(buf, last_update_idx, last_transfer_idx, transfer_idx)
         last_transfer_idx = transfer_idx
 
         green_line.set_data(pos_green)
         red_line.set_data(pos_red)
-
         progress_bar.set_data(last_update_idx)
 
         win.update()
