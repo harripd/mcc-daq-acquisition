@@ -21,7 +21,7 @@ class CounterAPI():
         device_info = DaqDeviceInfo(board_num)
         counter_info = device_info.get_ctr_info()
         
-        self.memhandle = ul.win_buf_alloc_64(SAMPLES * CHANNELS)
+        self.memhandle = ul.win_buf_alloc_64(BUFFER_SIZE * CHANNELS)
 
         if not self.memhandle:
             raise Exception("Could not allocate memory")
@@ -42,7 +42,7 @@ class CounterAPI():
                 board_num,
                 START_CTR,
                 END_CTR,
-                SAMPLES*CHANNELS,
+                BUFFER_SIZE*CHANNELS,
                 SAMPLES_PER_SECOND, self.memhandle,
                 ScanOptions.BACKGROUND | ScanOptions.CONTINUOUS | ScanOptions.CTR64BIT)
         return scanrate
@@ -58,4 +58,3 @@ class CounterAPI():
         buf = cast(memhandle, POINTER(c_ulonglong))
         return buf
 
-print(f"Scanning {scanrate}/s samples continuously to {SAMPLES} buffer")

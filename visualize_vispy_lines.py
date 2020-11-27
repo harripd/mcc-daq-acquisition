@@ -10,8 +10,8 @@ N = CANVAS_SIZE[0]
 
 # Leaves some space for the axes
 # TODO: refine this
-GRID_COLS=8
-GRID_ROWS=5
+GRID_COLS=10
+GRID_ROWS=7
 
 # green channel
 pos_green = np.zeros((N, 2), dtype=np.float32)
@@ -39,7 +39,7 @@ def transfer_data(buf, idx, transfer_from, transfer_to) -> int:
     if(transfer_to < transfer_from):
         # Counter circled over the end of the buffer
         # So process the end first
-        for i in range(transfer_from, SAMPLES, CHANNELS):
+        for i in range(transfer_from, BUFFER_SIZE, CHANNELS):
             pos_green[idx,1] = buf[i]
             pos_red[idx,1] = buf[i+1]
             idx = (idx + 1) % N

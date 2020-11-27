@@ -34,14 +34,14 @@ except:
     class MockCounter(threading.Thread):
         def __init__(self):
             threading.Thread.__init__(self)
-            self.buf = np.zeros(SAMPLES*CHANNELS)
+            self.buf = np.zeros(BUFFER_SIZE*CHANNELS)
             self.idx = 0
 
         def run(self):
             while(True):
                 buf[self.idx] = np.random.rand() * 20 + 1000
                 buf[self.idx+1] = np.random.rand() * 15 + 700
-                self.idx = (self.idx + 2) % (SAMPLES*CHANNELS)
+                self.idx = (self.idx + 2) % (BUFFER_SIZE*CHANNELS)
                 time.sleep(1 / SAMPLES_PER_SECOND)
             pass
         

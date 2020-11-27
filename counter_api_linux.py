@@ -17,7 +17,7 @@ class CounterAPI():
 
         self.dev.connect()
 
-        self.buf = uldaq.create_int_buffer(CHANNELS, SAMPLES)
+        self.buf = uldaq.create_int_buffer(CHANNELS, BUFFER_SIZE)
 
         for i in range(START_CTR, END_CTR+1):
             self.ctrdev.c_config_scan(
@@ -34,7 +34,7 @@ class CounterAPI():
         scanrate = self.ctrdev.c_in_scan(
                 START_CTR,
                 END_CTR,
-                SAMPLES,
+                BUFFER_SIZE,
                 SAMPLES_PER_SECOND,
                 uldaq.ScanOption.CONTINUOUS, # ScanOption
                 0, # CInScanFlag
