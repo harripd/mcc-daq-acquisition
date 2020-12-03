@@ -24,10 +24,10 @@ pos_red[:, 0] = np.linspace(0, N, N)
 pos_red[:,1] = None
 
 
-def transfer_data(buf, idx, transfer_from, transfer_to) -> int:
+def transfer_data(buf, canv_idx, transfer_from, transfer_to) -> (int, int):
     """
     Transfers data to canvas buffer, starting from transfer_from to transfer_to
-    Returns new idx (to canvas) and sets pos_green, pos_red. 
+    Returns new transfer_idx, new idx (to canvas) and sets pos_green, pos_red.
     """
 
     # print("transferring from buf[", transfer_from, "to", transfer_to, "] to canvas[", idx, "]")
@@ -36,25 +36,34 @@ def transfer_data(buf, idx, transfer_from, transfer_to) -> int:
         # TODO: could we miss a whole cycle? Very low probability
         return
 
-    if(transfer_to < transfer_from):
-        # Counter circled over the end of the buffer
-        # So process the end first
-        for i in range(transfer_from, BUFFER_SIZE, CHANNELS):
-            pos_green[idx,1] = buf[i]
-            pos_red[idx,1] = buf[i+1]
-            idx = (idx + 1) % N
-            #print("g:", buf[i],"\t", "r:", buf[i+1])
-        # Then start from the beginning for the rest
-        transfer_from = 0
-    for i in range(transfer_from, transfer_to, CHANNELS):
-        pos_green[idx,1] = buf[i]
-        pos_red[idx,1] = buf[i+1]
-        idx = (idx + 1) % N
-        #print("g:", buf[i],"\t", "r:", buf[i+1])
-    return idx
+    #print(f"{transfer_from}-{transfer_to}")
+
+    transferrable_samples = transfer_to - transfer_from
+    if transferrable_samples < 0:
+        # handle buffer overrun (restart from the left)
+        transferrable_samples += PLAIN_BUFFER_SIZE
+
+    transferrable_samples = transferrable_samples // CHANNELS
+
+    transferrable_bins = transferrable_samples // SAMPLES_PER_BIN
+
+    buf_idx = transfer_from
+    for _ in range(transferrable_bins):
+        green_bin = 0
+        red_bin = 0
+        for _ in range(0, SAMPLES_PER_BIN):
+            green_bin += buf[buf_idx]
+            red_bin += buf[buf_idx + 1]
+            buf_idx = (buf_idx + CHANNELS) % PLAIN_BUFFER_SIZE
+        #print(f"canv[{canv_idx}] = bin from {buf_idx-SAMPLES_PER_BIN*CHANNELS} to {buf_idx}")
+        pos_green[canv_idx,1] = green_bin
+        pos_red[canv_idx,1] = red_bin
+        canv_idx = (canv_idx +1) % N
+
+    return (buf_idx, canv_idx)
 
 
-def visualize(buf, get_idx_fn):
+def visualize(buf, get_idx_fn, update_callback_fn):
 
     win = scene.SceneCanvas(size=CANVAS_SIZE, keys='interactive', show=True, fullscreen=False)
     grid = win.central_widget.add_grid()
@@ -79,7 +88,7 @@ def visualize(buf, get_idx_fn):
     grid.add_widget(yax, 0, 0, row_span=GRID_ROWS)
     yax.link_view(view)
 
-    xax = scene.AxisWidget(orientation='bottom', axis_label=f"Time in (1/{SAMPLES_PER_SECOND})s",tick_label_margin=15)
+    xax = scene.AxisWidget(orientation='bottom', axis_label=f"Time in (1/{BIN_SIZE})s",tick_label_margin=15)
     grid.add_widget(xax, GRID_ROWS, 1, col_span=GRID_COLS)
     xax.link_view(view)
 
@@ -88,14 +97,16 @@ def visualize(buf, get_idx_fn):
     last_update_idx = 0
     def update(ev):
         nonlocal last_update_idx, last_transfer_idx
+
+        update_callback_fn(buf)
+
         transfer_idx = get_idx_fn()
-        if transfer_idx % 2 != 0:
+        if transfer_idx % CHANNELS != 0:
             # transfer of 1 channel is ahead, reading that sample next time
             # this shouldn't happen but let's add it for sanity anyways
-            transfer_idx -= 1
+            transfer_idx -= 1 # TODO: what if more channels?
 
-        last_update_idx = transfer_data(buf, last_update_idx, last_transfer_idx, transfer_idx)
-        last_transfer_idx = transfer_idx
+        last_transfer_idx, last_update_idx = transfer_data(buf, last_update_idx, last_transfer_idx, transfer_idx)
 
         green_line.set_data(pos_green)
         red_line.set_data(pos_red)

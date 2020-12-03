@@ -35,7 +35,7 @@ class CounterAPI():
                 START_CTR,
                 END_CTR,
                 BUFFER_SIZE,
-                SAMPLES_PER_SECOND,
+                ACQUISITION_RATE,
                 uldaq.ScanOption.CONTINUOUS, # ScanOption
                 0, # CInScanFlag
                 self.buf)

@@ -26,7 +26,8 @@ except:
     # if we had an error we use mock data
 
     print("Exception while initializing Counter")
-    print("Showing some sample data instead")
+    print("Press any key to continue with mock data...")
+    input()
 
     import threading,time
     import numpy as np
@@ -34,15 +35,22 @@ except:
     class MockCounter(threading.Thread):
         def __init__(self):
             threading.Thread.__init__(self)
-            self.buf = np.zeros(BUFFER_SIZE*CHANNELS)
+            self.buf = np.zeros(PLAIN_BUFFER_SIZE)
             self.idx = 0
 
         def run(self):
             while(True):
-                buf[self.idx] = np.random.rand() * 20 + 1000
-                buf[self.idx+1] = np.random.rand() * 15 + 700
-                self.idx = (self.idx + 2) % (BUFFER_SIZE*CHANNELS)
-                time.sleep(1 / SAMPLES_PER_SECOND)
+                sinargs = np.arange(self.idx, self.idx+SAMPLES_PER_BIN) * 2*np.pi / BUFFER_SIZE
+                sin = np.sin(sinargs) * 200
+                sin += (np.random.rand(SAMPLES_PER_BIN) - 0.5) * 20
+                buf[self.idx:self.idx+SAMPLES_PER_BIN*2:2] = (sin + 1000) / SAMPLES_PER_BIN
+
+                noise = (np.random.rand(SAMPLES_PER_BIN) * 15 + 200)
+
+                buf[self.idx+1:self.idx+SAMPLES_PER_BIN*2+1:2] = (noise + 200) / SAMPLES_PER_BIN
+
+                self.idx = (self.idx + SAMPLES_PER_BIN*CHANNELS) % (PLAIN_BUFFER_SIZE)
+                time.sleep(1 / BIN_SIZE)
             pass
         
         def get_idx(self):
@@ -56,5 +64,9 @@ except:
     get_idx_fn = mock.get_idx
     mock.start()
 
-visualizer_backend.visualize(buf, get_idx_fn)
+
+def update_callback_fn(buf, ):
+    pass
+
+visualizer_backend.visualize(buf, get_idx_fn, update_callback_fn)
 

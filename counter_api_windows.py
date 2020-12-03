@@ -43,7 +43,8 @@ class CounterAPI():
                 START_CTR,
                 END_CTR,
                 BUFFER_SIZE*CHANNELS,
-                SAMPLES_PER_SECOND, self.memhandle,
+                ACQUISITION_RATE,
+                self.memhandle,
                 ScanOptions.BACKGROUND | ScanOptions.CONTINUOUS | ScanOptions.CTR64BIT)
         return scanrate
 
