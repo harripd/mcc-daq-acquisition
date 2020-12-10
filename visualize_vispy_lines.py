@@ -53,11 +53,13 @@ def transfer_data(buf, canv_idx, transfer_from, transfer_to) -> (int, int):
         red_bin = 0
         for _ in range(0, SAMPLES_PER_BIN):
             green_bin += buf[buf_idx]
-            red_bin += buf[buf_idx + 1]
+            if(CHANNELS == 2):
+                red_bin += buf[buf_idx + 1]
             buf_idx = (buf_idx + CHANNELS) % PLAIN_BUFFER_SIZE
         #print(f"canv[{canv_idx}] = bin from {buf_idx-SAMPLES_PER_BIN*CHANNELS} to {buf_idx}")
         pos_green[canv_idx,1] = green_bin
-        pos_red[canv_idx,1] = red_bin
+        if(CHANNELS == 2):
+            pos_red[canv_idx,1] = red_bin
         canv_idx = (canv_idx +1) % N
 
     return (buf_idx, canv_idx)
@@ -81,7 +83,8 @@ def visualize(buf, get_idx_fn, update_callback_fn):
 
     progress_bar = scene.visuals.InfiniteLine(0, parent=view.scene)
     green_line = scene.visuals.Line(pos=pos_green,color='g',parent=view.scene)
-    red_line = scene.visuals.Line(pos=pos_red,color='r',parent=view.scene)
+    if(CHANNELS == 2):
+        red_line = scene.visuals.Line(pos=pos_red,color='r',parent=view.scene)
     gridlines = scene.GridLines(color=(1, 1, 1, 1), parent=view.scene)
 
     yax = scene.AxisWidget(orientation='left', axis_label="Counts")
@@ -109,7 +112,8 @@ def visualize(buf, get_idx_fn, update_callback_fn):
         last_transfer_idx, last_update_idx = transfer_data(buf, last_update_idx, last_transfer_idx, transfer_idx)
 
         green_line.set_data(pos_green)
-        red_line.set_data(pos_red)
+        if(CHANNELS == 2):
+            red_line.set_data(pos_red)
         progress_bar.set_data(last_update_idx)
 
         win.update()

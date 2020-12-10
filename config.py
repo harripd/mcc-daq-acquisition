@@ -20,8 +20,8 @@ END_CTR = START_CTR + (CHANNELS-1)
 Acquisition
 """
 
-ACQUISITION_RATE = 10**5
-BUFFER_SIZE = 7000 # Buffer size for each channel
+ACQUISITION_RATE = int(1e5)
+BUFFER_SIZE = int(2e7) # Buffer size for each channel
 
 PLAIN_BUFFER_SIZE = BUFFER_SIZE * CHANNELS
 
