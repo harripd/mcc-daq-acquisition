@@ -34,7 +34,7 @@ def transfer_data(buf, canv_idx, transfer_from, transfer_to) -> (int, int):
 
     if(transfer_from == transfer_to):
         # TODO: could we miss a whole cycle? Very low probability
-        return
+        return (buf_idx, canv_idx)
 
     #print(f"{transfer_from}-{transfer_to}")
 

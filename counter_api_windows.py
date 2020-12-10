@@ -6,9 +6,11 @@ from mcculw.device_info import DaqDeviceInfo
 
 from ctypes import cast, POINTER, c_ulong, c_ulonglong
 
+from config import *
+
 class CounterAPI():
 
-    def setup():
+    def setup(self):
         self.board_num = 0
     
         # configure first detected device
@@ -16,9 +18,9 @@ class CounterAPI():
         devices = ul.get_daq_device_inventory(InterfaceType.USB)
         if not devices:
             raise ULError(ErrorCode.BADBOARD)
-        ul.create_daq_device(board_num, devices[0])
+        ul.create_daq_device(self.board_num, devices[0])
 
-        device_info = DaqDeviceInfo(board_num)
+        device_info = DaqDeviceInfo(self.board_num)
         counter_info = device_info.get_ctr_info()
         
         self.memhandle = ul.win_buf_alloc_64(BUFFER_SIZE * CHANNELS)
@@ -37,9 +39,9 @@ class CounterAPI():
                     0, # tick_size
                     i) # mapped_channel (should be ignored by CounterMode)
 
-    def start_scan():
+    def start_scan(self):
         scanrate = ul.c_in_scan(
-                board_num,
+                self.board_num,
                 START_CTR,
                 END_CTR,
                 BUFFER_SIZE*CHANNELS,
@@ -48,14 +50,14 @@ class CounterAPI():
                 ScanOptions.BACKGROUND | ScanOptions.CONTINUOUS | ScanOptions.CTR64BIT)
         return scanrate
 
-    def stop_scan():
+    def stop_scan(self):
         raise ValueError("Not implemented! Shutting down")
 
-    def get_idx_fn():
+    def get_idx_fn(self):
         (_,_, cur_idx) = ul.get_status(self.board_num, FunctionType.CTRFUNCTION)
         return cur_idx
 
-    def get_buf():
-        buf = cast(memhandle, POINTER(c_ulonglong))
+    def get_buf(self):
+        buf = cast(self.memhandle, POINTER(c_ulonglong))
         return buf
 
