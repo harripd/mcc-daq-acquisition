@@ -21,7 +21,7 @@ Acquisition
 """
 
 ACQUISITION_RATE = int(1e5)
-BUFFER_SIZE = int(2e7) # Buffer size for each channel
+BUFFER_SIZE = int(2e5) # Buffer size for each channel
 
 PLAIN_BUFFER_SIZE = BUFFER_SIZE * CHANNELS
 

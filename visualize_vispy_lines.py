@@ -65,9 +65,9 @@ def transfer_data(buf, canv_idx, transfer_from, transfer_to) -> (int, int):
     return (buf_idx, canv_idx)
 
 
-def visualize(buf, get_idx_fn, update_callback_fn):
+def visualize(buf, get_idx_fn, update_callback_fn, keys='interactive'):
 
-    win = scene.SceneCanvas(size=CANVAS_SIZE, keys='interactive', show=True, fullscreen=False)
+    win = scene.SceneCanvas(size=CANVAS_SIZE, keys=keys, show=True, fullscreen=False)
     grid = win.central_widget.add_grid()
     
     view = grid.add_view(
@@ -101,13 +101,13 @@ def visualize(buf, get_idx_fn, update_callback_fn):
     def update(ev):
         nonlocal last_update_idx, last_transfer_idx
 
-        update_callback_fn(buf)
-
         transfer_idx = get_idx_fn()
         if transfer_idx % CHANNELS != 0:
             # transfer of 1 channel is ahead, reading that sample next time
             # this shouldn't happen but let's add it for sanity anyways
             transfer_idx -= 1 # TODO: what if more channels?
+
+        update_callback_fn(buf, transfer_idx)
 
         last_transfer_idx, last_update_idx = transfer_data(buf, last_update_idx, last_transfer_idx, transfer_idx)
 
