@@ -89,10 +89,11 @@ def toggle_acquisition():
             print("Nothing recorded permanently yet, not saving.")
         else:
             print("amount of timestamps:", current_time)
+            print("amount of photons:", len(detectors)//CHANNELS)
             np_timestamps = np.array(timestamps) 
             np_detectors = np.array(detectors)
             timestamps_unit = 1/ACQUISITION_RATE 
-            write_hdf5.write_file(np_timestamps, np_detectors, timestamps_unit, fname=f'measurements_{int(time.time())}')
+            write_hdf5.write_file(np_timestamps, np_detectors, timestamps_unit, fname=f'measurement_{int(time.time())}')
 
         # reset measurement
         timestamps = []
@@ -109,26 +110,29 @@ def update_callback_fn(buf, valid_idx):
     #print(f"update callback called, idx={valid_idx}")
     if processing_first_half and valid_idx > midpoint:
         for i in range(0, midpoint, CHANNELS):
-            if buf[i] != 1:
-                #print(f"Binsize too big, {buf[i]} photons couldn't be distinguished")
-                pass
-            if buf[i] != 0:
+            if buf[i] > 1:
+                print(f"GREEN: Acquisition too coarse, {buf[i]} photons couldn't be distinguished")
+            if buf[i+1] > 1:
+                print(f"RED:   Acquisition too coarse, {buf[i+1]} photons couldn't be distinguished")
+
+            for _ in range(buf[i]):
                 timestamps.append(current_time)
                 detectors.append(0)
-            if buf[i+1] != 0:
+            for _ in range(buf[i+1]):
                 timestamps.append(current_time)
                 detectors.append(1)
             current_time += 1
         processing_first_half = False
     if not processing_first_half and valid_idx < midpoint:
         for i in range(midpoint, BUFFER_SIZE, CHANNELS):
-            if buf[i] != 1:
-                #print(f"Binsize too big, {buf[i]} photons couldn't be distinguished")
-                pass
-            if buf[i] != 0:
+            if buf[i] > 1:
+                print(f"GREEN: Acquisition too coarse, {buf[i]} photons couldn't be distinguished")
+            if buf[i+1] > 1:
+                print(f"RED:   Acquisition too coarse, {buf[i+1]} photons couldn't be distinguished")
+            for _ in range(buf[i]):
                 timestamps.append(current_time)
                 detectors.append(0)
-            if buf[i+1] != 0:
+            for _ in range(buf[i+1]):
                 timestamps.append(current_time)
                 detectors.append(1)
             current_time += 1
