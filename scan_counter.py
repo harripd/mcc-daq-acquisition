@@ -1,34 +1,33 @@
 #!/usr/bin/env python3
 
 import os
+import threading
+import time
+
 import numpy as np
 
 import visualize_vispy_lines as visualizer_backend
+import write_hdf5
 from config import *
 
-import write_hdf5
-
-import time
-
+if os.name == "posix":
+    from counter_api_linux import CounterAPI
+elif os.name == "nt":
+    from counter_api_windows import CounterAPI
+else:
+    raise Exception("Operating System not Supported! Must be one of POSIX or NT")
 
 def main():
 
-    if os.name == "posix":
-        from counter_api_linux import CounterAPI
-    elif os.name == "nt":
-        from counter_api_windows import CounterAPI
-    else:
-        print("Operating System not supported!")
-        exit(0)
-
     try:
-        counterAPI = CounterAPI()
+        counter_api = CounterAPI()
 
-        counterAPI.setup()
-        buf = counterAPI.get_buf()
-        get_idx_fn = counterAPI.get_idx_fn
+        counter_api.setup()
+        buf = counter_api.get_buf()
+        get_idx_fn = counter_api.get_idx_fn
 
-        scanrate = counterAPI.start_scan()
+        scan_rate = counter_api.start_scan()
+        print(f"scanning with {scan_rate}/s")
     except:
         # if we had an error we use mock data
 
@@ -36,16 +35,14 @@ def main():
         print("Press any key to continue with mock data...")
         input()
 
-        import threading
-
         class MockCounter(threading.Thread):
             def __init__(self):
                 threading.Thread.__init__(self)
                 self.buf = np.zeros(PLAIN_BUFFER_SIZE)
                 self.idx = 0
+                self.stop = False
 
             def run(self):
-                self.stop = False
                 while not self.stop:
                     sinargs = np.arange(self.idx, self.idx+SAMPLES_PER_BIN) * 2*np.pi / BUFFER_SIZE
                     sin = np.sin(sinargs) * 200
@@ -56,7 +53,7 @@ def main():
 
                     buf[self.idx+1:self.idx+SAMPLES_PER_BIN*2+1:2] = (noise + 200) / SAMPLES_PER_BIN
 
-                    self.idx = (self.idx + SAMPLES_PER_BIN*CHANNELS) % (PLAIN_BUFFER_SIZE)
+                    self.idx = (self.idx + SAMPLES_PER_BIN*CHANNELS) % PLAIN_BUFFER_SIZE
                     time.sleep(1 / BIN_SIZE)
 
             def get_idx(self):
@@ -70,7 +67,6 @@ def main():
         get_idx_fn = mock.get_idx
         mock.start()
 
-
     # TODO: is it better to convert it into photon arrival times now or later?
 
     processing_first_half = True
@@ -81,8 +77,9 @@ def main():
     detectors = []
 
     acquisition = False
+
     def toggle_acquisition():
-        global acquisition, timestamps, detectors, current_time
+        nonlocal acquisition, timestamps, detectors, current_time
         acquisition = not acquisition
         print("Acquisition", "started" if acquisition else "stopped")
         if not acquisition:
@@ -102,14 +99,13 @@ def main():
             detectors = []
             current_time = 0
 
-
     def update_callback_fn(buf, valid_idx):
-        global current_time, processing_first_half
+        nonlocal current_time, processing_first_half
 
         if not acquisition:
             return
 
-        #print(f"update callback called, idx={valid_idx}")
+        # print(f"update callback called, idx={valid_idx}")
         if processing_first_half and valid_idx > midpoint:
             for i in range(0, midpoint, CHANNELS):
                 if buf[i] > 1:

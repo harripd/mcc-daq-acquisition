@@ -10,18 +10,18 @@ N = CANVAS_SIZE[0]
 
 # Leaves some space for the axes
 # TODO: refine this
-GRID_COLS=10
-GRID_ROWS=7
+GRID_COLS = 10
+GRID_ROWS = 7
 
 # green channel
 pos_green = np.zeros((N, 2), dtype=np.float32)
 pos_green[:, 0] = np.linspace(0, N, N)
-pos_green[:,1] = None
+pos_green[:, 1] = None
 
 # red channel
 pos_red = np.zeros((N, 2), dtype=np.float32)
 pos_red[:, 0] = np.linspace(0, N, N)
-pos_red[:,1] = None
+pos_red[:, 1] = None
 
 
 def transfer_data(buf, canv_idx, transfer_from, transfer_to) -> (int, int):
@@ -32,11 +32,11 @@ def transfer_data(buf, canv_idx, transfer_from, transfer_to) -> (int, int):
 
     # print("transferring from buf[", transfer_from, "to", transfer_to, "] to canvas[", idx, "]")
 
-    if(transfer_from == transfer_to):
+    if transfer_from == transfer_to:
         # TODO: could we miss a whole cycle? Very low probability
-        return (transfer_from, canv_idx)
+        return transfer_from, canv_idx
 
-    #print(f"{transfer_from}-{transfer_to}")
+    # print(f"{transfer_from}-{transfer_to}")
 
     transferrable_samples = transfer_to - transfer_from
     if transferrable_samples < 0:
@@ -53,16 +53,16 @@ def transfer_data(buf, canv_idx, transfer_from, transfer_to) -> (int, int):
         red_bin = 0
         for _ in range(0, SAMPLES_PER_BIN):
             green_bin += buf[buf_idx]
-            if(CHANNELS == 2):
+            if CHANNELS == 2:
                 red_bin += buf[buf_idx + 1]
             buf_idx = (buf_idx + CHANNELS) % PLAIN_BUFFER_SIZE
-        #print(f"canv[{canv_idx}] = bin from {buf_idx-SAMPLES_PER_BIN*CHANNELS} to {buf_idx}")
-        pos_green[canv_idx,1] = green_bin
-        if(CHANNELS == 2):
-            pos_red[canv_idx,1] = red_bin
-        canv_idx = (canv_idx +1) % N
+        # print(f"canv[{canv_idx}] = bin from {buf_idx-SAMPLES_PER_BIN*CHANNELS} to {buf_idx}")
+        pos_green[canv_idx, 1] = green_bin
+        if CHANNELS == 2:
+            pos_red[canv_idx, 1] = red_bin
+        canv_idx = (canv_idx + 1) % N
 
-    return (buf_idx, canv_idx)
+    return buf_idx, canv_idx
 
 
 def visualize(buf, get_idx_fn, update_callback_fn, keys='interactive'):
@@ -71,7 +71,7 @@ def visualize(buf, get_idx_fn, update_callback_fn, keys='interactive'):
     grid = win.central_widget.add_grid()
     
     view = grid.add_view(
-        row = 0,
+        row=0,
         col=1,
         row_span=GRID_ROWS,
         col_span=GRID_COLS,
@@ -83,7 +83,7 @@ def visualize(buf, get_idx_fn, update_callback_fn, keys='interactive'):
 
     progress_bar = scene.visuals.InfiniteLine(0, parent=view.scene)
     green_line = scene.visuals.Line(pos=pos_green,color='g',parent=view.scene)
-    if(CHANNELS == 2):
+    if CHANNELS == 2:
         red_line = scene.visuals.Line(pos=pos_red,color='r',parent=view.scene)
     gridlines = scene.GridLines(color=(1, 1, 1, 1), parent=view.scene)
 
@@ -91,13 +91,13 @@ def visualize(buf, get_idx_fn, update_callback_fn, keys='interactive'):
     grid.add_widget(yax, 0, 0, row_span=GRID_ROWS)
     yax.link_view(view)
 
-    xax = scene.AxisWidget(orientation='bottom', axis_label=f"Time in (1/{BIN_SIZE})s",tick_label_margin=15)
+    xax = scene.AxisWidget(orientation='bottom', axis_label=f"Time in (1/{BIN_SIZE})s", tick_label_margin=15)
     grid.add_widget(xax, GRID_ROWS, 1, col_span=GRID_COLS)
     xax.link_view(view)
 
-
     last_transfer_idx = 0
     last_update_idx = 0
+
     def update(ev):
         nonlocal last_update_idx, last_transfer_idx
 
@@ -105,14 +105,14 @@ def visualize(buf, get_idx_fn, update_callback_fn, keys='interactive'):
         if transfer_idx % CHANNELS != 0:
             # transfer of 1 channel is ahead, reading that sample next time
             # this shouldn't happen but let's add it for sanity anyways
-            transfer_idx -= 1 # TODO: what if more channels?
+            transfer_idx -= 1  # TODO: what if more channels?
 
         update_callback_fn(buf, transfer_idx)
 
         last_transfer_idx, last_update_idx = transfer_data(buf, last_update_idx, last_transfer_idx, transfer_idx)
 
         green_line.set_data(pos_green)
-        if(CHANNELS == 2):
+        if CHANNELS == 2:
             red_line.set_data(pos_red)
         progress_bar.set_data(last_update_idx)
 
