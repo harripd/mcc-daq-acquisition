@@ -1,7 +1,9 @@
 import numpy as np
 import sys
 
-from vispy import gloo, app, visuals, scene
+from vispy import app, scene
+
+from PyQt5.QtWidgets import *
 
 from config import *
 
@@ -65,10 +67,15 @@ def transfer_data(buf, canv_idx, transfer_from, transfer_to) -> (int, int):
     return buf_idx, canv_idx
 
 
-def visualize(buf, get_idx_fn, update_callback_fn, keys='interactive'):
+def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
 
-    win = scene.SceneCanvas(size=CANVAS_SIZE, keys=keys, show=True, fullscreen=False)
-    grid = win.central_widget.add_grid()
+    if acquisition_fun is not None:
+        keys = dict(space=acquisition_fun)
+    else:
+        keys = "interactive"
+
+    scene_canvas = scene.SceneCanvas(size=CANVAS_SIZE, keys=keys, show=False, fullscreen=False)
+    grid = scene_canvas.central_widget.add_grid()
     
     view = grid.add_view(
         row=0,
@@ -116,11 +123,25 @@ def visualize(buf, get_idx_fn, update_callback_fn, keys='interactive'):
             red_line.set_data(pos_red)
         progress_bar.set_data(last_update_idx)
 
-        win.update()
+        scene_canvas.update()
 
     timer = app.Timer(interval='auto')
     timer.connect(update)
     timer.start()
+
+    w = QMainWindow()
+    widget = QWidget()
+    w.setCentralWidget(widget)
+    widget.setLayout(QVBoxLayout())
+
+    measurement_button = QPushButton("Toggle Measurement")
+    measurement_button.setCheckable(True)
+    measurement_button.setChecked(False)
+    measurement_button.clicked.connect(acquisition_fun)
+
+    widget.layout().addWidget(measurement_button)
+    widget.layout().addWidget(scene_canvas.native)
+    w.show()
 
     if sys.flags.interactive != 1:
         app.run()

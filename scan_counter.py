@@ -38,20 +38,20 @@ def main():
         class MockCounter(threading.Thread):
             def __init__(self):
                 threading.Thread.__init__(self)
-                self.buf = np.zeros(PLAIN_BUFFER_SIZE)
+                self.buf = np.zeros(PLAIN_BUFFER_SIZE, dtype=int)
                 self.idx = 0
                 self.stop = False
 
             def run(self):
                 while not self.stop:
-                    sinargs = np.arange(self.idx, self.idx+SAMPLES_PER_BIN) * 2*np.pi / BUFFER_SIZE
-                    sin = np.sin(sinargs) * 200
+                    sinargs = np.arange(self.idx, self.idx+SAMPLES_PER_BIN) * 20*np.pi / BUFFER_SIZE
+                    sin = np.sin(sinargs) * 2000
                     sin += (np.random.rand(SAMPLES_PER_BIN) - 0.5) * 20
-                    buf[self.idx:self.idx+SAMPLES_PER_BIN*2:2] = (sin + 1000) / SAMPLES_PER_BIN
+                    buf[self.idx:self.idx+SAMPLES_PER_BIN*2:2] = (sin + 250) / SAMPLES_PER_BIN
 
-                    noise = (np.random.rand(SAMPLES_PER_BIN) * 15 + 200)
+                    noise = (np.random.rand(SAMPLES_PER_BIN) * 1500)
 
-                    buf[self.idx+1:self.idx+SAMPLES_PER_BIN*2+1:2] = (noise + 200) / SAMPLES_PER_BIN
+                    buf[self.idx+1:self.idx+SAMPLES_PER_BIN*2+1:2] = (noise + 2000) / SAMPLES_PER_BIN
 
                     self.idx = (self.idx + SAMPLES_PER_BIN*CHANNELS) % PLAIN_BUFFER_SIZE
                     time.sleep(1 / BIN_SIZE)
@@ -140,7 +140,8 @@ def main():
             buf,
             get_idx_fn,
             update_callback_fn,
-            keys=dict(space=toggle_acquisition))
+            acquisition_fun=toggle_acquisition)
+
     print("Ended Visualization")
 
 
