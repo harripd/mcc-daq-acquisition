@@ -105,35 +105,35 @@ def main():
         if not acquisition:
             return
 
-        # print(f"update callback called, idx={valid_idx}")
+        def copy(idx):
+            nonlocal current_time
+            if buf[idx] > 1:
+                print(f"GREEN: Acquisition too coarse, {buf[idx]} photons couldn't be distinguished")
+            if buf[idx + 1] > 1:
+                print(f"RED:   Acquisition too coarse, {buf[idx+1]} photons couldn't be distinguished")
+
+            # If your analysis software does not allow multiple photons to have the same timestamp,
+            # You will have to adapt the following lines to not blindly repeat the arrival times and
+            # instead spread them over multiple timestamps. This also means that the resolution has
+            # to be changed. Like current_time += 10 (and changes in the hdf5 file)
+
+            # green
+            timestamps.extend([current_time] * buf[idx])
+            detectors.extend([0] * buf[idx])
+
+            # red
+            timestamps.extend([current_time] * buf[idx+1])
+            detectors.extend([1] * buf[idx])
+
+            current_time += 1
+
         if processing_first_half and valid_idx > midpoint:
             for i in range(0, midpoint, CHANNELS):
-                if buf[i] > 1:
-                    print(f"GREEN: Acquisition too coarse, {buf[i]} photons couldn't be distinguished")
-                if buf[i+1] > 1:
-                    print(f"RED:   Acquisition too coarse, {buf[i+1]} photons couldn't be distinguished")
-
-                for _ in range(buf[i]):
-                    timestamps.append(current_time)
-                    detectors.append(0)
-                for _ in range(buf[i+1]):
-                    timestamps.append(current_time)
-                    detectors.append(1)
-                current_time += 1
+                copy(i)
             processing_first_half = False
         if not processing_first_half and valid_idx < midpoint:
             for i in range(midpoint, BUFFER_SIZE, CHANNELS):
-                if buf[i] > 1:
-                    print(f"GREEN: Acquisition too coarse, {buf[i]} photons couldn't be distinguished")
-                if buf[i+1] > 1:
-                    print(f"RED:   Acquisition too coarse, {buf[i+1]} photons couldn't be distinguished")
-                for _ in range(buf[i]):
-                    timestamps.append(current_time)
-                    detectors.append(0)
-                for _ in range(buf[i+1]):
-                    timestamps.append(current_time)
-                    detectors.append(1)
-                current_time += 1
+                copy(i)
             processing_first_half = True
 
     visualizer_backend.visualize(
