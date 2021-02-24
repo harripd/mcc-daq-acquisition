@@ -130,6 +130,7 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     timer.start()
 
     w = QMainWindow()
+    w.setWindowTitle("Noisy Lines Simulator v0.0.1")
     widget = QWidget()
     w.setCentralWidget(widget)
     widget.setLayout(QVBoxLayout())
