@@ -107,10 +107,10 @@ def main():
 
         def copy(idx):
             nonlocal current_time
-            if buf[idx] > 1:
-                print(f"GREEN: Acquisition too coarse, {buf[idx]} photons couldn't be distinguished")
-            if buf[idx + 1] > 1:
-                print(f"RED:   Acquisition too coarse, {buf[idx+1]} photons couldn't be distinguished")
+            #if buf[idx] > 1:
+            #    print(f"GREEN: Acquisition too coarse, {buf[idx]} photons couldn't be distinguished")
+            #if buf[idx + 1] > 1:
+            #    print(f"RED:   Acquisition too coarse, {buf[idx+1]} photons couldn't be distinguished")
 
             # If your analysis software does not allow multiple photons to have the same timestamp,
             # You will have to adapt the following lines to not blindly repeat the arrival times and
