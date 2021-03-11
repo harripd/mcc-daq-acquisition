@@ -135,14 +135,52 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     w.setCentralWidget(widget)
     widget.setLayout(QVBoxLayout())
 
-    measurement_button = QPushButton("Toggle Measurement")
-    measurement_button.setCheckable(True)
-    measurement_button.setChecked(False)
-    measurement_button.clicked.connect(acquisition_fun)
+    measurement_frame = QFrame(widget)
+    widget.layout().addWidget(measurement_frame)
 
-    widget.layout().addWidget(measurement_button)
-    widget.layout().addWidget(scene_canvas.native)
+    measurement_layout = QHBoxLayout(measurement_frame)
+
+    # Toggle Button
+    measurement_toggle_button = QPushButton("Toggle Measurement")
+    measurement_toggle_button.setCheckable(True)
+    measurement_toggle_button.setChecked(False)
+    measurement_toggle_button.clicked.connect(acquisition_fun)
+
+    measurement_layout.addWidget(measurement_toggle_button)
+
+    # Type (HDF5 or CSV)
+    measurement_type_group = QGroupBox("Measurement Type", measurement_frame)
+    measurement_layout.addWidget(measurement_type_group)
+
+    measurement_type_group_layout = QVBoxLayout(measurement_type_group)
+
+    measurement_type_select_hdf5 = QRadioButton("HDF5")
+    measurement_type_select_hdf5.setChecked(True)
+    measurement_type_group_layout.addWidget(measurement_type_select_hdf5)
+    measurement_type_select_csv = QRadioButton("CSV")
+    measurement_type_group_layout.addWidget(measurement_type_select_csv)
+
+    measurement_type_select_hdf5.clicked.connect(
+        lambda: set_measurement_type("HDF5")
+    )
+    measurement_type_select_csv.clicked.connect(
+        lambda: set_measurement_type("CSV")
+    )
+
+    # Type selection disabled when measurement is running
+    measurement_toggle_button.clicked.connect(measurement_type_group.setDisabled)
+
+    widget.layout().addWidget(measurement_frame)
+    widget.layout().addWidget(scene_canvas.native, stretch=1)
     w.show()
 
     if sys.flags.interactive != 1:
         app.run()
+
+
+measurement_type = "HDF5"
+
+
+def set_measurement_type(t):
+    global measurement_type
+    measurement_type = t

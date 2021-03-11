@@ -81,7 +81,7 @@ def main():
     def toggle_acquisition():
         nonlocal acquisition, timestamps, detectors, current_time
         acquisition = not acquisition
-        print("Acquisition", "started" if acquisition else "stopped")
+        print(f"Acquisition as {visualizer_backend.measurement_type}", "started" if acquisition else "stopped")
         if not acquisition:
             # User just turned off acquisition
             if len(timestamps) == 0:
