@@ -19,7 +19,7 @@ def toggle_acquisition():
     print(f"Acquisition as CSV", "started" if acquisition else "stopped")
     if acquisition:
         # User just turned on acquisition
-        csv_file = open(f'measurement_{int(time.time())}.csv', 'w+')
+        csv_file = open(f'measurement_{int(time.time())}.csv', 'w+', newline="")
         csv_writer = csv.writer(csv_file)
         csv_writer.writerow(["time", "green", "red"])
     else:
