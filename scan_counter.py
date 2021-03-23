@@ -19,6 +19,7 @@ elif os.name == "nt":
 else:
     raise Exception("Operating System not Supported! Must be one of POSIX or NT")
 
+
 def main():
 
     try:
@@ -69,8 +70,6 @@ def main():
         get_idx_fn = mock.get_idx
         mock.start()
 
-    # TODO: is it better to convert it into photon arrival times now or later?
-
     def update_callback_fn(buf, valid_idx):
         if visualizer_backend.measurement_type == "HDF5":
             hdf_acquisition.update_callback_fn(buf, valid_idx)
@@ -78,6 +77,7 @@ def main():
             csv_acquisition.update_callback_fn(buf, valid_idx)
 
     def toggle_acquisition():
+        # TODO: rather than toggle we should probably call stop/start here.
         if visualizer_backend.measurement_type == "HDF5":
             hdf_acquisition.toggle_acquisition()
         else:

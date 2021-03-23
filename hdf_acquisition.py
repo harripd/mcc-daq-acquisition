@@ -15,6 +15,8 @@ detectors = []
 acquisition = False
 
 
+# TODO: is it better to convert it into photon arrival times now or later?
+
 def toggle_acquisition():
     global acquisition, timestamps, detectors, current_time
     acquisition = not acquisition
@@ -42,6 +44,9 @@ def update_callback_fn(buf, valid_idx):
 
     if not acquisition:
         return
+
+    # TODO: test if enough points collected
+    #       if yes, stop acquisition
 
     def copy(idx):
         global current_time

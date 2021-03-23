@@ -149,7 +149,7 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     measurement_layout.addWidget(measurement_toggle_button)
 
     # Type (HDF5 or CSV)
-    measurement_type_group = QGroupBox("Measurement Type", measurement_frame)
+    measurement_type_group = QGroupBox("Storage Type", measurement_frame)
     measurement_layout.addWidget(measurement_type_group)
 
     measurement_type_group_layout = QVBoxLayout(measurement_type_group)
@@ -167,6 +167,18 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
         lambda: set_measurement_type("CSV")
     )
 
+    measurement_settings = QGroupBox("Measurement Settings", measurement_frame)
+    measurement_layout.addWidget(measurement_settings)
+
+    measurement_settings_layout = QFormLayout(measurement_settings)
+
+    measurement_settings_seconds_label = QLabel("Seconds")
+    measurement_settings_seconds_input = QSpinBox()
+    measurement_settings_seconds_input.setRange(1, 300)
+    measurement_settings_layout.addRow(measurement_settings_seconds_label, measurement_settings_seconds_input)
+
+    measurement_settings_seconds_input.valueChanged.connect(set_measurement_seconds)
+
     # Type selection disabled when measurement is running
     measurement_toggle_button.clicked.connect(measurement_type_group.setDisabled)
 
@@ -178,9 +190,19 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
         app.run()
 
 
+# Global variables that will be read from main / acquisition parts
+# TODO: change these to accessors
+
 measurement_type = "HDF5"
+measurement_time_seconds = 1
 
 
 def set_measurement_type(t):
     global measurement_type
     measurement_type = t
+
+
+def set_measurement_seconds(t):
+    global measurement_time_seconds
+    measurement_time_seconds = t
+    print("new measurement time: ", t)

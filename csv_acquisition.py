@@ -41,6 +41,9 @@ def update_callback_fn(buf, valid_idx):
     if not acquisition:
         return
 
+    # TODO: test if enough points collected
+    #       if yes, stop acquisition
+
     if csv_writer is None:
         print("Error in Acquisition, please restart!")
         return
