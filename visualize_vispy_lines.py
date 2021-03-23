@@ -205,4 +205,3 @@ def set_measurement_type(t):
 def set_measurement_seconds(t):
     global measurement_time_seconds
     measurement_time_seconds = t
-    print("new measurement time: ", t)
