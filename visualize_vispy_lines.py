@@ -181,10 +181,20 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
 
     # Type selection disabled when measurement is running
     measurement_toggle_button.clicked.connect(measurement_type_group.setDisabled)
+    measurement_toggle_button.clicked.connect(measurement_settings.setDisabled)
 
     widget.layout().addWidget(measurement_frame)
     widget.layout().addWidget(scene_canvas.native, stretch=1)
     w.show()
+
+    global stop_measurement
+    def stop_fn():
+        print("Stop fn!")
+        measurement_toggle_button.setChecked(False)
+        measurement_type_group.setEnabled(True)
+        measurement_settings.setEnabled(True)
+
+    stop_measurement = stop_fn
 
     if sys.flags.interactive != 1:
         app.run()
@@ -205,3 +215,6 @@ def set_measurement_type(t):
 def set_measurement_seconds(t):
     global measurement_time_seconds
     measurement_time_seconds = t
+
+
+stop_measurement = lambda: None

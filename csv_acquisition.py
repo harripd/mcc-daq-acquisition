@@ -35,30 +35,39 @@ def toggle_acquisition():
         csv_file = None
 
 
-def update_callback_fn(buf, valid_idx):
+def update_callback_fn(buf, valid_idx, total_seconds):
     global current_time, processing_first_half
 
     if not acquisition:
-        return
+        return True
 
     # TODO: test if enough points collected
     #       if yes, stop acquisition
 
     if csv_writer is None:
         print("Error in Acquisition, please restart!")
-        return
+        return True
 
     def write(idx):
         global current_time
+
+        if current_time // ACQUISITION_RATE >= total_seconds:
+            toggle_acquisition()
+            return False
+
         csv_writer.writerow([current_time, buf[idx], buf[idx+1]])
         current_time += 1
+        return True
 
     if processing_first_half and valid_idx > midpoint:
         for i in range(0, midpoint, CHANNELS):
-            write(i)
+            if not write(i):
+                return False
         processing_first_half = False
     if not processing_first_half and valid_idx < midpoint:
         for i in range(midpoint, BUFFER_SIZE, CHANNELS):
-            write(i)
+            if not write(i):
+                return False
         processing_first_half = True
 
+    return True

@@ -39,11 +39,11 @@ def toggle_acquisition():
         current_time = 0
 
 
-def update_callback_fn(buf, valid_idx):
+def update_callback_fn(buf, valid_idx, total_seconds):
     global current_time, processing_first_half
 
     if not acquisition:
-        return
+        return True
 
     # TODO: test if enough points collected
     #       if yes, stop acquisition
@@ -60,6 +60,11 @@ def update_callback_fn(buf, valid_idx):
         # instead spread them over multiple timestamps. This also means that the resolution has
         # to be changed. Like current_time += 10 (and changes in the hdf5 file)
 
+        if current_time // ACQUISITION_RATE >= total_seconds:
+            # End of acquisition has been reached
+            toggle_acquisition()
+            return False
+
         # green
         timestamps.extend([current_time] * buf[idx])
         detectors.extend([0] * buf[idx])
@@ -69,13 +74,17 @@ def update_callback_fn(buf, valid_idx):
         detectors.extend([1] * buf[idx])
 
         current_time += 1
+        return True
 
     if processing_first_half and valid_idx > midpoint:
         for i in range(0, midpoint, CHANNELS):
-            copy(i)
+            if not copy(i):
+                return False
         processing_first_half = False
     if not processing_first_half and valid_idx < midpoint:
         for i in range(midpoint, BUFFER_SIZE, CHANNELS):
-            copy(i)
+            if not copy(i):
+                return False
         processing_first_half = True
 
+    return True

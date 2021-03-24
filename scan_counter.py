@@ -71,10 +71,13 @@ def main():
         mock.start()
 
     def update_callback_fn(buf, valid_idx):
+        cont = True
         if visualizer_backend.measurement_type == "HDF5":
-            hdf_acquisition.update_callback_fn(buf, valid_idx)
+            cont = hdf_acquisition.update_callback_fn(buf, valid_idx, visualizer_backend.measurement_time_seconds)
         else:
-            csv_acquisition.update_callback_fn(buf, valid_idx)
+            cont = csv_acquisition.update_callback_fn(buf, valid_idx, visualizer_backend.measurement_time_seconds)
+        if not cont:
+            visualizer_backend.stop_measurement()
 
     def toggle_acquisition():
         # TODO: rather than toggle we should probably call stop/start here.
