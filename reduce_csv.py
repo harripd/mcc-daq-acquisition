@@ -17,11 +17,12 @@ with open(sys.argv[1], 'r') as f:
         red = 0
         for row in reader:
             t, g, r = row
+            t = int(t)
             green += int(g)
             red += int(r)
             samples += 1
             if samples == RESAMPLE_FACTOR:
-                writer.writerow([t, green, red])
+                writer.writerow([(t+1)//RESAMPLE_FACTOR, green, red])
                 samples = 0
                 green = 0
                 red = 0
