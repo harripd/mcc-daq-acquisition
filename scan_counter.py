@@ -3,6 +3,7 @@
 import os
 import threading
 import time
+import traceback
 
 import numpy as np
 
@@ -33,6 +34,7 @@ def main():
         print(f"scanning with {scan_rate}/s")
     except:
         # if we had an error we use mock data
+        traceback.print_exc()
 
         print("Exception while initializing Counter")
         print("Press any key to continue with mock data...")
