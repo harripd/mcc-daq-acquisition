@@ -3,7 +3,7 @@
 import sys
 import csv
 
-RESAMPLE_FACTOR = 2e3
+RESAMPLE_FACTOR = int(2e2)
 
 with open(sys.argv[1], 'r') as f:
     reader = csv.reader(f)

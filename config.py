@@ -20,7 +20,7 @@ END_CTR = START_CTR + (CHANNELS-1)
 Acquisition
 """
 
-ACQUISITION_RATE = int(2e6) # maximum 2e6 for current counter module
+ACQUISITION_RATE = int(2e5) # maximum 2e6 for current counter module, 2e5 for Windows however
 BUFFER_SIZE = int(4e6) # Buffer size for each channel. 2*ACQUISITION_RATE seems reasonable
 
 PLAIN_BUFFER_SIZE = BUFFER_SIZE * CHANNELS
