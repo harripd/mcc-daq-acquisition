@@ -1,3 +1,7 @@
+This software is not affiliated with MCC DAQ in any way.
+It just happens to be used for projects with MCC DAQ counter modules.
+
+
 ### windows setup:
 
 #### 1. Install MCC DAQ Software
@@ -41,3 +45,7 @@ If you're getting an error that some freetype library is missing you have to ins
 
 Note that this also requires Microsoft Visual C++ Redistributable für Visual Studio 2019.
 You can find this e.g. at https://visualstudio.microsoft.com/de/downloads/ (Under the "other" dropdown)
+
+
+
+Copyright © 2021 Philipp Klocke
