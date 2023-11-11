@@ -1,43 +1,56 @@
 """
-Global constants
+Reads config.yaml when imported.
+This means that config.yaml will be read multiple times. Welcome to Python.
+
+Exits if the config is not found or invalid.
 """
 
+from ruamel.yaml import YAML
+from pathlib import Path
 
-"""
-General setup (Counters/Channels)
-"""
-# Changing this is not really supported
-CHANNELS = 2
+class Config(object):
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(Config, cls).__new__(cls)
+        return cls.instance
 
-# probably don't need to touch this
-# just use channel 0 and 1 on the counter pls.
-# but you definitely need to use a continuous number of counters
-START_CTR = 0
-END_CTR = START_CTR + (CHANNELS-1)
+    def __init__(self):
+        path = Path('config.yaml')
+        if not path.exists():
+            print("Error:", path, "not found!")
+            exit(-1)
+        try:
+            yaml=YAML(typ='safe')
+            self.config = yaml.load(path)
+        except Exception as exc:
+            print(exc)
+            exit(-1)
+        # Some basic config verification:
+        if(self.config['acquisition_rate'] < self.config['bin_size']):
+            print("")
+            print("Error: Trying to show more samples than acquired")
+            print("Please choose acquisition_rate >= bin_size")
+            exit(0)
+        # Type conversions:
+        # Unfortunately the easier scientific (1e10) notation is float by default..
+        self.config['acquisition_rate'] = int(self.config['acquisition_rate'])
+        self.config['bin_size'] = int(self.config['bin_size'])
+        self.config['buffer_size'] = int(self.config['buffer_size'])
 
+def get_config():
+    return Config().config
 
-"""
-Acquisition
-"""
+# Export config with the legacy names:
 
-ACQUISITION_RATE = int(2e5) # maximum 2e6 for current counter module, 2e5 for Windows however
-BUFFER_SIZE = int(4e6) # Buffer size for each channel. 2*ACQUISITION_RATE seems reasonable
+CHANNELS = get_config()['channels']
+START_CTR = get_config()['start_ctr']
+END_CTR = get_config()['end_ctr']
 
+ACQUISITION_RATE = get_config()['acquisition_rate']
+BUFFER_SIZE = get_config()['buffer_size']
+CANVAS_SIZE = (get_config()['canvas_width'], get_config()['canvas_height'])
+BIN_SIZE = get_config()['bin_size']
+
+# derived values:
 PLAIN_BUFFER_SIZE = BUFFER_SIZE * CHANNELS
-
-"""
-Visualisation
-"""
-
-# TODO canvas size, probably not good to have it as constant.
-CANVAS_SIZE = (1000, 800) # (width, height)
-BIN_SIZE = 10**3 # this is only for visualization! See ACQUISITION_RATE
-
 SAMPLES_PER_BIN = ACQUISITION_RATE // BIN_SIZE
-
-
-if(ACQUISITION_RATE < BIN_SIZE):
-    print("")
-    print("Error: Trying to show more samples than acquired")
-    print("Please choose ACQUISITION_RATE >= SAMPLES_PER_SECOND")
-    exit(0)

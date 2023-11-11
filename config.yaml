@@ -1,0 +1,20 @@
+---
+# General setup (Counters/Channels) and Acquisition
+
+# Changing number of channels is not really supported.
+# Maybe 1 channel works, but 3 were definitely never tested.
+channels: 2
+
+# Use channel 0 and 1 on the counter if possible.
+# Used channels have to form a continuous sequence [start_ctr,..,end_ctr].
+start_ctr: 0
+end_ctr: 1
+
+# These are the settings you may want to modify:
+acquisition_rate: 2e5 # maximum 2e6 for current counter module, 2e5 for Windows however.
+buffer_size: 4e6 # Buffer size for each channel. 2*acquisition_rate is reasonable.
+
+# Visualization settings
+canvas_width: 1000
+canvas_height: 800
+bin_size: 10e3 #in 1/s. Only used for visualization! see acquisition_rate instead.
