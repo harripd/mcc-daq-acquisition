@@ -11,10 +11,10 @@ start_ctr: 0
 end_ctr: 1
 
 # These are the settings you may want to modify:
-acquisition_rate: 2e5 # maximum 2e6 for current counter module, 2e5 for Windows however.
+acquisition_rate: 2e5 # in 1/s maximum 2e6 for current counter module, 2e5 for Windows however.
 buffer_size: 4e6 # Buffer size for each channel. 2*acquisition_rate is reasonable.
 
 # Visualization settings
 canvas_width: 1000
 canvas_height: 800
-bin_size: 10e3 #in 1/s. Only used for visualization! see acquisition_rate instead.
+bin_size: 1e3 # How many data points should be grouped together into one bin on the x axis. Only used for visualization! See acquisition_rate instead.
