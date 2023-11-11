@@ -18,12 +18,14 @@ class Config(object):
         path = Path('config.yaml')
         if not path.exists():
             print("Error:", path, "not found!")
+            input()
             exit(-1)
         try:
             yaml=YAML(typ='safe')
             self.config = yaml.load(path)
         except Exception as exc:
-            print(exc)
+            print("Could not load config: ", exc)
+            input()
             exit(-1)
         # Some basic config verification:
         if(self.config['acquisition_rate'] < self.config['bin_size']):
