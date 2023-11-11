@@ -5,6 +5,8 @@ This means that config.yaml will be read multiple times. Welcome to Python.
 Exits if the config is not found or invalid.
 """
 
+import sys
+
 from ruamel.yaml import YAML
 from pathlib import Path
 
@@ -19,20 +21,21 @@ class Config(object):
         if not path.exists():
             print("Error:", path, "not found!")
             input()
-            exit(-1)
+            sys.exit(-1)
         try:
             yaml=YAML(typ='safe')
             self.config = yaml.load(path)
         except Exception as exc:
             print("Could not load config: ", exc)
             input()
-            exit(-1)
+            sys.exit(-1)
         # Some basic config verification:
         if(self.config['acquisition_rate'] < self.config['bin_size']):
             print("")
             print("Error: Trying to show more samples than acquired")
             print("Please choose acquisition_rate >= bin_size")
-            exit(0)
+            input()
+            sys.exit(0)
         # Type conversions:
         # Unfortunately the easier scientific (1e10) notation is float by default..
         self.config['acquisition_rate'] = int(self.config['acquisition_rate'])

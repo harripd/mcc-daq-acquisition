@@ -49,6 +49,18 @@ Note that this also requires Microsoft Visual C++ Redistributable für Visual St
 You can find this e.g. at https://visualstudio.microsoft.com/de/downloads/ (Under the "other" dropdown)
 
 
+#### Other Things:
+
+If you want to build an executable (after changing the script), use PyInstaller:
+https://pyinstaller.org/en/stable/
+
+You will have to edit scan_counter.spec to include your venv/site-packages directory!
+
+```
+pip install pyinstaller
+pyinstaller scan_counter.spec
+```
+
 #### License
 
 This program is free software: you can redistribute it and/or modify

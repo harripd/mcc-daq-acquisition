@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+# PyInstaller fix.
+# must be toplevel in this file!
+import multiprocessing
+multiprocessing.freeze_support()
+
 import os
 import threading
 import time
