@@ -1,11 +1,15 @@
 import numpy as np
 import sys
 
+from threading import Thread, Lock
+from time import sleep
+
 from vispy import app, scene
 
 from PyQt5.QtWidgets import *
 
 from config import *
+from auto_align import autofocus
 
 # vertex positions of data to draw
 N = CANVAS_SIZE[0]
@@ -102,11 +106,17 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     grid.add_widget(xax, GRID_ROWS, 1, col_span=GRID_COLS)
     xax.link_view(view)
 
+    auto_align_mutex = Lock()
+    auto_align_awaits = False
+    auto_align_start_idx = 0
+    auto_align_end_idx = 0
+
     last_transfer_idx = 0
     last_update_idx = 0
 
     def update(ev):
         nonlocal last_update_idx, last_transfer_idx
+        nonlocal auto_align_mutex, auto_align_awaits, auto_align_start_idx, auto_align_end_idx
 
         transfer_idx = get_idx_fn()
         if transfer_idx % CHANNELS != 0:
@@ -115,6 +125,17 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
             transfer_idx -= 1  # TODO: what if more channels?
 
         update_callback_fn(buf, transfer_idx)
+        
+        if auto_align:
+            if auto_align_thread is not None and not auto_align_thread.is_alive():
+                reset_auto_align_fn()
+            elif auto_align_awaits:
+                # Communicate via a global variable because I can't find a better way
+                with auto_align_mutex:
+                    if auto_align_start_idx is None:
+                        auto_align_start_idx = transfer_idx
+                    auto_align_end_idx = transfer_idx
+                    
 
         last_transfer_idx, last_update_idx = transfer_data(buf, last_update_idx, last_transfer_idx, transfer_idx)
 
@@ -124,6 +145,20 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
         progress_bar.set_data(last_update_idx)
 
         scene_canvas.update()
+    
+
+    def auto_align_measure_fn(secs):
+        nonlocal auto_align_mutex, auto_align_awaits, auto_align_start_idx, auto_align_end_idx
+        with auto_align_mutex:
+            auto_align_awaits = True
+            auto_align_start_idx = None
+        sleep(secs)
+        with auto_align_mutex:
+            if not auto_align: # auto align was stopped in the meantime.
+                return None
+            if auto_align_end_idx < auto_align_start_idx:
+                auto_align_end_idx = BUFFER_SIZE
+            return np.mean(buf[auto_align_start_idx:auto_align_end_idx]) / CHANNELS * 1000
 
     timer = app.Timer(interval='auto')
     timer.connect(update)
@@ -135,11 +170,21 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     w.setCentralWidget(widget)
     widget.setLayout(QVBoxLayout())
 
+    autoalign_frame = QFrame(widget)
+    widget.layout().addWidget(autoalign_frame)
+    autoalign_layout = QHBoxLayout(autoalign_frame)
+    
+    autoalign_toggle_button = QPushButton("Autoalign Axis")
+    autoalign_toggle_button.setCheckable(True)
+    autoalign_toggle_button.setChecked(False)
+    autoalign_layout.addWidget(autoalign_toggle_button)
+    
+    autoalign_toggle_button.clicked.connect(lambda: toggle_auto_align(auto_align_measure_fn))
+
     measurement_frame = QFrame(widget)
     widget.layout().addWidget(measurement_frame)
-
     measurement_layout = QHBoxLayout(measurement_frame)
-
+    
     # Toggle Button
     measurement_toggle_button = QPushButton("Toggle Measurement")
     measurement_toggle_button.setCheckable(True)
@@ -184,6 +229,7 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     measurement_toggle_button.clicked.connect(measurement_settings.setDisabled)
 
     widget.layout().addWidget(measurement_frame)
+    widget.layout().addWidget(autoalign_frame)
     widget.layout().addWidget(scene_canvas.native, stretch=1)
     w.show()
 
@@ -195,6 +241,13 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
         measurement_settings.setEnabled(True)
 
     stop_measurement = stop_fn
+    
+    def reset_auto_align_fn():
+        global auto_align
+        global auto_align_thread
+        autoalign_toggle_button.setChecked(False)
+        auto_align = False
+        auto_align_thread = None
 
     if sys.flags.interactive != 1:
         app.run()
@@ -202,6 +255,22 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
 
 # Global variables that will be read from main / acquisition parts
 # TODO: change these to accessors
+
+#Communicate via global variables coz I can't find a better way.
+
+# TODO: Add real measure_fn...
+auto_align = False
+auto_align_thread = None
+def toggle_auto_align(auto_align_measure_fn):
+    global auto_align
+    global auto_align_thread
+    auto_align = not auto_align
+    if auto_align:
+        auto_align_thread = Thread(target = autofocus.auto_align, args = (auto_align_measure_fn, should_stop_autoalign_fn,))
+        auto_align_thread.start()
+    
+def should_stop_autoalign_fn():
+    return not auto_align
 
 measurement_type = "HDF5"
 measurement_time_seconds = 1

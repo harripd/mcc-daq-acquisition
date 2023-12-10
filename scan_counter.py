@@ -27,6 +27,7 @@ else:
 
 
 def main():
+    print("(C) Philipp Klocke")
 
     try:
         counter_api = CounterAPI()

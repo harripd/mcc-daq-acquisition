@@ -3,3 +3,4 @@ vispy
 phconvert
 ruamel.yaml
 PyQt5
+pyserial
