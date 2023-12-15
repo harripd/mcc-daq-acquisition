@@ -16,7 +16,7 @@ Open Anaconda Prompt (windows menu, search for anaconda)
 
 In Anaconda prompt enter:
 ```
-pip install mcculw vispy phconvert
+pip install -r requirements.txt
 ```
 
 (you can also try `conda install` instead of `pip install` but probably it won't work for all packages)
