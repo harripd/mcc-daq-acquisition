@@ -20,11 +20,15 @@ class AGUC8Control(Serial):
     reset_delay = 0.05
     current_channel = None
 
-    def __init__(self, multichannel=False, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.reset()
-        self.multichannel=multichannel
-        print(self.ask("VE"))
+        version = self.ask("VE")
+        print(version)
+        if version.contains("UC2"):
+            self.multichannel = False
+        else:
+            self.multichannel = True
 
     def write(self, cmd: str) -> None:
         with DelayedKeyboardInterrupt():
