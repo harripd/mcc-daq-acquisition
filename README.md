@@ -2,15 +2,22 @@ This software is not affiliated with MCC DAQ in any way.
 It just happens to be used for projects with MCC DAQ counter modules.
 
 
-### windows setup:
+### Windows Setup:
 
 #### 1. Install MCC DAQ Software
 
 Can be found here: http://www.mccdaq.com/Software-Downloads.aspx
 
-#### 2. Install Anaconda
+#### 2. Install this Software
 
-Download and install from https://www.anaconda.com/download
+##### 2.a Binary Release
+
+Go to https://github.com/klockeph/mcc-daq-acquisition/releases and download a binary (.exe) file from there.
+If you want to modify the code, don't use windows or cannot use the binary release for any other reason, follow the manual instructions below:
+
+##### 2.b Manual Installation
+
+Download and install anaconda from https://www.anaconda.com/download
 
 Open Anaconda Prompt (windows menu, search for anaconda)
 
@@ -27,21 +34,21 @@ Navigate to wherever you stored this software. E.g.:
 cd Documents\virometer_code\
 ```
 
-Then you can run the script by entering
+Then run the script by entering
 
 ```
 python scan_counter.py
 ```
 
 
-#### 4. Enjoy!
+#### 3. Enjoy!
 
 Press `[Space]` in the graph-window to start a measurement. Press it again to stop and save it.
 
-If you need to change any parameter, look in `config.py`
+If you need to change any parameter, look in `config.yaml`
 
 
-#### 5. Known Errors
+#### 4. Known Errors
 
 If you're getting an error that some freetype library is missing you have to install it from e.g. https://github.com/ubawurinna/freetype-windows-binaries according to https://stackoverflow.com/questions/55291132/runtime-error-freetype-library-not-found .
 
