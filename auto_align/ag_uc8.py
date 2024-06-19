@@ -25,7 +25,7 @@ class AGUC8Control(Serial):
         self.reset()
         version = self.ask("VE")
         print(version)
-        if version.contains("UC2"):
+        if "UC2" in version:
             self.multichannel = False
         else:
             self.multichannel = True

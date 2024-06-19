@@ -18,13 +18,15 @@ import csv_acquisition
 
 from config import *
 
-if os.name == "posix":
-    from counter_api_linux import CounterAPI
-elif os.name == "nt":
-    from counter_api_windows import CounterAPI
-else:
-    raise Exception("Operating System not Supported! Must be one of POSIX or NT")
-
+try:
+    if os.name == "posix":
+        from counter_api_linux import CounterAPI
+    elif os.name == "nt":
+        from counter_api_windows import CounterAPI
+    else:
+        raise Exception("Operating System not Supported! Must be one of POSIX or NT")
+except:
+    print("uldaq not installed, must proceed with mock data")
 
 def main():
     print("(C) Philipp Klocke")
@@ -45,6 +47,22 @@ def main():
         print("Exception while initializing Counter")
         print("Press any key to continue with mock data...")
         input()
+        
+        # import numba
+        # @numba.jit(nopython=True)
+        def rand_burst():
+            bins = np.zeros(SAMPLES_PER_BIN, dtype=np.int64)
+            num_burst = 1 if np.random.poisson() else 0
+            l = np.random.randint(0,SAMPLES_PER_BIN, size=num_burst)
+            s = np.random.poisson(30, size=num_burst)
+            ph_locs = np.random.normal(scale=50, size=s).astype(int) + l
+            print(ph_locs)
+            for loc in ph_locs:
+                if loc < 0 or loc >= bins.size:
+                    continue
+                bins[loc] += 1
+            return bins
+            
 
         class MockCounter(threading.Thread):
             def __init__(self):
@@ -55,10 +73,20 @@ def main():
 
             def run(self):
                 while not self.stop:
-                    sinargs = np.arange(self.idx, self.idx+SAMPLES_PER_BIN) * 20*np.pi / BUFFER_SIZE
-                    sin = np.sin(sinargs) * 2000
-                    sin += (np.random.rand(SAMPLES_PER_BIN) - 0.5) * 20
-                    buf[self.idx:self.idx+SAMPLES_PER_BIN*2:2] = (sin + 250) / SAMPLES_PER_BIN
+                    buf[self.idx:self.idx+SAMPLES_PER_BIN*2:2] = 0
+                    bins = np.zeros(SAMPLES_PER_BIN, dtype=np.int64)
+                    num_burst = 1 if np.random.poisson() else 0
+                    l = np.random.randint(0,SAMPLES_PER_BIN, size=num_burst)
+                    s = np.random.poisson(30, size=num_burst)
+                    ph_locs = np.random.normal(scale=50, size=s).astype(int) + l
+                    for loc in ph_locs:
+                        if loc < 0 or loc >= bins.size:
+                            continue
+                        buf[self.idx+2*loc] += 1
+                    # sinargs = np.arange(self.idx, self.idx+SAMPLES_PER_BIN) * 20*np.pi / BUFFER_SIZE
+                    # sin = np.sin(sinargs) * 2000
+                    # sin += (np.random.rand(SAMPLES_PER_BIN) - 0.5) * 20
+                    # buf[self.idx:self.idx+SAMPLES_PER_BIN*2:2] = (sin + 250) / SAMPLES_PER_BIN
 
                     noise = (np.random.rand(SAMPLES_PER_BIN) * 1500)
 

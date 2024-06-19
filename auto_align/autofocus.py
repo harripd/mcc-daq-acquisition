@@ -1,12 +1,17 @@
 # Laser Piezo Autofocus
 
 import numpy
-import serial
-import serial.tools.list_ports
+try:
+    import serial
+    import serial.tools.list_ports
+    from auto_align.ag_uc8 import AGUC8Control
+except:
+    has_serial = False
+else:
+    has_serial = True
+    
 
-from auto_align.ag_uc8 import AGUC8Control
-
-def auto_align(measure_fn, should_stop_fn):
+def auto_align1(measure_fn, should_stop_fn):
     # plugging in and out the usb id changes, so we just pick any and fail if there's more than one
     [comport] = serial.tools.list_ports.comports()
     control = AGUC8Control(
@@ -92,3 +97,9 @@ def auto_align(measure_fn, should_stop_fn):
                 )
                 measurements = []
                 (step_size, measure_secs) = step_sizes.pop(0)
+
+if has_serial:
+    auto_align = auto_align1
+else:
+    def auto_align(*args, **kwargs):
+        return

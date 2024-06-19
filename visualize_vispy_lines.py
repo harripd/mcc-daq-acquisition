@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import *
 from config import *
 from auto_align import autofocus
 
+from correlate import pcorrelate, proc_buffer
+
 # vertex positions of data to draw
 N = CANVAS_SIZE[0]
 
@@ -105,6 +107,28 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     xax = scene.AxisWidget(orientation='bottom', axis_label=f"Time in (1/{BIN_SIZE})s", tick_label_margin=15)
     grid.add_widget(xax, GRID_ROWS, 1, col_span=GRID_COLS)
     xax.link_view(view)
+    
+    corr_bins = np.logspace(np.log(1/ACQUISITION_RATE)/np.log(10), 0, 10)
+    corr_pos = np.vstack([corr_bins[:-1], np.zeros(corr_bins.size-1)]).T
+    corr_bins = (corr_bins*ACQUISITION_RATE).astype(int)
+    
+    corr_view = grid.add_view(row=GRID_ROWS, col=1, row_span=GRID_ROWS, col_span=GRID_COLS,
+                              camera='panzoom', border_color='grey')
+    corr_node = scene.Node(parent=corr_view.scene)
+    corr_node.transform = scene.transforms.LogTransform(base=(10,0,0))
+    
+    corr_line = scene.visuals.Line(pos=corr_pos, parent=corr_node, color='g')
+    
+    corr_gridlines = scene.GridLines(color=(1, 1, 1, 1), parent=corr_node)
+
+    corr_yax = scene.AxisWidget(orientation='left', axis_label="G(tau)")
+    grid.add_widget(corr_yax, GRID_ROWS, 0, row_span=GRID_ROWS)
+    corr_yax.link_view(corr_view)
+
+    corr_xax = scene.AxisWidget(orientation='bottom', axis_label=f"log(tau) (s)", tick_label_margin=15)
+    grid.add_widget(corr_xax, 2*GRID_ROWS, 1, col_span=GRID_COLS)
+    corr_xax.link_view(corr_view)
+    
 
     auto_align_mutex = Lock()
     auto_align_awaits = False
@@ -143,7 +167,12 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
         if CHANNELS == 2:
             red_line.set_data(pos_red)
         progress_bar.set_data(last_update_idx)
-
+        
+        
+        times = proc_buffer(buf, transfer_idx)
+        corr_pos[:,1] = pcorrelate(times, times, corr_bins)
+        corr_line.set_data(corr_pos)
+        
         scene_canvas.update()
     
 
