@@ -206,8 +206,11 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     corr_timer.start()
     
     def update_corr_timer(t):
-        corr_timer.stop()
-        corr_timer.start(interval=t)
+        if t == 0 or t == 301:
+            corr_timer.stop()
+        else:
+            corr_timer.stop()
+            corr_timer.start(interval=t)
 
     w = QMainWindow()
     w.setWindowTitle("Noisy Lines Simulator v0.0.1")
@@ -264,14 +267,14 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
 
     measurement_settings_seconds_label = QLabel("Measurement duration (seconds)")
     measurement_settings_seconds_input = QSpinBox()
-    measurement_settings_seconds_input.setRange(1, 300)
+    measurement_settings_seconds_input.setRange(1, 301)
     measurement_settings_layout.addRow(measurement_settings_seconds_label, measurement_settings_seconds_input)
     
     measurement_settings_seconds_input.valueChanged.connect(set_measurement_seconds)
     
     measurement_settings_seconds_label = QLabel("Correlation update frequency (seconds)")
     measurment_settings_correlateion_input = QSpinBox()
-    measurment_settings_correlateion_input.setRange(1, 60)
+    measurment_settings_correlateion_input.setRange(0, 300)
     measurment_settings_correlateion_input.setValue(10)
     measurement_settings_layout.addRow(measurement_settings_seconds_label, measurment_settings_correlateion_input)
 
