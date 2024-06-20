@@ -14,7 +14,7 @@ from vispy import scene, app
 
 import config
 
-@numba.jit(nopython=True)
+@numba.jit(numba.float64[:](numba.float64[:], numba.int64[:], numba.int64[:], numba.int64[:]), nopython=True)
 def pnormalize(G, t, u, bins):
     r"""Normalize point-process cross-correlation function.
 
@@ -51,8 +51,8 @@ def pnormalize(G, t, u, bins):
     return Gn
 
 
-@numba.jit(nopython=True)
-def pcorrelate(t, u, bins, normalize=True):
+@numba.jit(numba.float64[:](numba.int64[:], numba.int64[:], numba.int64[:]), nopython=True)
+def pcorrelate(t, u, bins):
     """Compute correlation of two arrays of discrete events (Point-process).
 
     The input arrays need to be values of a point process, such as
@@ -115,9 +115,8 @@ def pcorrelate(t, u, bins, normalize=True):
             # Now j is the index of the first `u` element >= of
             # the next bin left edge
         counts += imax - imin
-    G = counts / np.diff(bins)
-    if normalize:
-        G = pnormalize(G, t, u, bins)
+    G = counts / (bins[1:]-bins[:-1])
+    G = pnormalize(G, t, u, bins)
     return G
 
 
@@ -235,11 +234,15 @@ def _get_mask(dets, det):
             mask += dets == d
     return mask
 
+
 def proc_buffer(buf, idx, stride=1, offset=0):
-    subbuf = buf[offset:idx:stride]
-    times = np.empty((sum(subbuf), ), dtype=np.int64)
+    return _proc_buffer(np.array(buf[offset:idx:stride], dtype=np.int64))
+
+@numba.jit(numba.int64[:](numba.int64[:]))
+def _proc_buffer(buf):
+    times = np.empty((np.sum(buf), ), dtype=np.int64)
     i = 0
-    for t, n in enumerate(subbuf):
+    for t, n in enumerate(buf):
         for _ in range(n):
             times[i] = t
             i += 1
@@ -319,7 +322,7 @@ def correlate(time, clk, det=None, sort='auto', deta=None, detb=None,
             deta, detb = np.unique(det)
         timea = time[_get_mask(det, deta)]
         timeb = time[_get_mask(det, detb)]
-    return bins, pcorrelate(timea, timeb, scale_bins, normalize=True)
+    return bins, pcorrelate(timea, timeb, scale_bins)
 
 
 if __name__ == "__main__":

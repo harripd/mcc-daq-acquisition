@@ -168,12 +168,20 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
             red_line.set_data(pos_red)
         progress_bar.set_data(last_update_idx)
         
+        scene_canvas.update()
+    
+    def update_corr(ev):
+        nonlocal last_update_idx, last_transfer_idx
+        nonlocal auto_align_mutex, auto_align_awaits, auto_align_start_idx, auto_align_end_idx
+
+        transfer_idx = get_idx_fn()
         
         times = proc_buffer(buf, transfer_idx)
-        corr_pos[:,1] = pcorrelate(times, times, corr_bins)
-        corr_line.set_data(corr_pos)
-        
-        scene_canvas.update()
+        if (times[-1] - times[0]) > corr_bins[-1]:
+            corr_pos[:,1] = pcorrelate(times, times, corr_bins)
+            c_pos = corr_pos[~np.isnan(corr_pos[:,1]), :]
+            corr_line.set_data(c_pos)
+            scene_canvas.update()
     
 
     def auto_align_measure_fn(secs):
@@ -192,6 +200,14 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     timer = app.Timer(interval='auto')
     timer.connect(update)
     timer.start()
+    
+    corr_timer = app.Timer(interval=10)
+    corr_timer.connect(update_corr)
+    corr_timer.start()
+    
+    def update_corr_timer(t):
+        corr_timer.stop()
+        corr_timer.start(interval=t)
 
     w = QMainWindow()
     w.setWindowTitle("Noisy Lines Simulator v0.0.1")
@@ -246,12 +262,20 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
 
     measurement_settings_layout = QFormLayout(measurement_settings)
 
-    measurement_settings_seconds_label = QLabel("Seconds")
+    measurement_settings_seconds_label = QLabel("Measurement duration (seconds)")
     measurement_settings_seconds_input = QSpinBox()
     measurement_settings_seconds_input.setRange(1, 300)
     measurement_settings_layout.addRow(measurement_settings_seconds_label, measurement_settings_seconds_input)
-
+    
     measurement_settings_seconds_input.valueChanged.connect(set_measurement_seconds)
+    
+    measurement_settings_seconds_label = QLabel("Correlation update frequency (seconds)")
+    measurment_settings_correlateion_input = QSpinBox()
+    measurment_settings_correlateion_input.setRange(1, 60)
+    measurment_settings_correlateion_input.setValue(10)
+    measurement_settings_layout.addRow(measurement_settings_seconds_label, measurment_settings_correlateion_input)
+
+    measurment_settings_correlateion_input.valueChanged.connect(update_corr_timer)
 
     # Type selection disabled when measurement is running
     measurement_toggle_button.clicked.connect(measurement_type_group.setDisabled)
