@@ -28,8 +28,8 @@ def toggle_acquisition():
         else:
             print("amount of timestamps:", current_time)
             print("amount of photons:", len(detectors) // CHANNELS)
-            np_timestamps = np.array(timestamps)
-            np_detectors = np.array(detectors)
+            np_timestamps = np.array(timestamps, dtype=np.int64)
+            np_detectors = np.array(detectors, dtype=np.uint8)
             timestamps_unit = 1 / ACQUISITION_RATE
             write_hdf5.write_file(np_timestamps, np_detectors, timestamps_unit, fname=f'measurement_{int(time.time())}')
 

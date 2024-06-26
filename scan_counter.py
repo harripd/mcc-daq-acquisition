@@ -29,6 +29,12 @@ except:
     print("uldaq not installed, must proceed with mock data")
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Calculate auto/cross corelation of times")
+    parser.add_argument('-c', '--cross', help="Display cross correlation", action="store_true")
+    parser.add_argument('-a', '--auto', help="Display auto correlation", action="store_true")
+    args = parser.parse_args()
+    
     print("(C) Philipp Klocke")
 
     try:
@@ -47,21 +53,6 @@ def main():
         print("Exception while initializing Counter")
         print("Press any key to continue with mock data...")
         input()
-        
-        # import numba
-        # @numba.jit(nopython=True)
-        def rand_burst():
-            bins = np.zeros(SAMPLES_PER_BIN, dtype=np.int64)
-            num_burst = 1 if np.random.poisson() else 0
-            l = np.random.randint(0,SAMPLES_PER_BIN, size=num_burst)
-            s = np.random.poisson(30, size=num_burst)
-            ph_locs = np.random.normal(scale=50, size=s).astype(int) + l
-            print(ph_locs)
-            for loc in ph_locs:
-                if loc < 0 or loc >= bins.size:
-                    continue
-                bins[loc] += 1
-            return bins
             
 
         class MockCounter(threading.Thread):
@@ -74,17 +65,16 @@ def main():
             def run(self):
                 while not self.stop:
                     buf[self.idx:self.idx+SAMPLES_PER_BIN*2:2] = 0
-                    bins = np.zeros(SAMPLES_PER_BIN, dtype=np.int64)
-                    num_burst = 1 if np.random.poisson() else 0
-                    l = np.random.randint(0,SAMPLES_PER_BIN, size=num_burst)
-                    s = np.random.poisson(30, size=num_burst)
-                    ph_locs = np.random.normal(scale=50, size=s).astype(int) + l
-                    for loc in ph_locs:
-                        if loc < 0 or loc >= bins.size:
-                            continue
-                        buf[self.idx+2*loc] += 1
+                    if np.random.poisson(0.1):
+                        bins = np.zeros(SAMPLES_PER_BIN, dtype=np.int64)
+                        burst_center = np.random.randint(0, SAMPLES_PER_BIN)
+                        ph_locs = np.random.normal(burst_center, scale=1e-3*ACQUISITION_RATE, size=np.random.poisson(50)).astype(np.int64)
+                        for loc in ph_locs:
+                            if loc < 0 or loc >= bins.size:
+                                continue
+                            buf[self.idx+2*loc] += 1
                     # sinargs = np.arange(self.idx, self.idx+SAMPLES_PER_BIN) * 20*np.pi / BUFFER_SIZE
-                    # sin = np.sin(sinargs) * 2000
+                    # sin = np.abs(np.sin(sinargs)) * 10
                     # sin += (np.random.rand(SAMPLES_PER_BIN) - 0.5) * 20
                     # buf[self.idx:self.idx+SAMPLES_PER_BIN*2:2] = (sin + 250) / SAMPLES_PER_BIN
 
@@ -121,12 +111,17 @@ def main():
             hdf_acquisition.toggle_acquisition()
         else:
             csv_acquisition.toggle_acquisition()
-
-    visualizer_backend.visualize(
-            buf,
-            get_idx_fn,
-            update_callback_fn,
-            acquisition_fun=toggle_acquisition)
+    
+    if CHANNELS == 1 and args.cross:
+        print("Cannot show cross correlation for single channel setups")
+    else:
+        visualizer_backend.visualize(
+                buf,
+                get_idx_fn,
+                update_callback_fn,
+                acquisition_fun=toggle_acquisition,
+                correlate=args.cross or args.auto,
+                cross=args.cross, auto=args.auto)
 
     print("Ended Visualization")
 

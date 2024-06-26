@@ -235,8 +235,13 @@ def _get_mask(dets, det):
     return mask
 
 
-def proc_buffer(buf):
-    times = np.empty((np.sum(buf), ), dtype=np.int64)
+def proc_buffer(buf, transfer_idx, offset, stride):
+    buf_arr = np.array(buf[offset:transfer_idx:stride], dtype=np.int64)
+    return _proc_buffer(buf_arr)
+
+@numba.jit(numba.int64[:](numba.int64[:]))
+def _proc_buffer(buf):
+    times = np.empty(buf.sum(), dtype=np.int64)
     i = 0
     for t, n in enumerate(buf):
         for _ in range(n):

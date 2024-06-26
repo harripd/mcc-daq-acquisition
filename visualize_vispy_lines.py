@@ -73,7 +73,8 @@ def transfer_data(buf, canv_idx, transfer_from, transfer_to) -> (int, int):
     return buf_idx, canv_idx
 
 
-def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
+def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None, 
+              correlate=False, cross=True, auto=True):
 
     if acquisition_fun is not None:
         keys = dict(space=acquisition_fun)
@@ -108,26 +109,30 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     grid.add_widget(xax, GRID_ROWS, 1, col_span=GRID_COLS)
     xax.link_view(view)
     
-    corr_bins = np.logspace(np.log(1/ACQUISITION_RATE)/np.log(10), 0, 10)
-    corr_pos = np.vstack([corr_bins[:-1], np.zeros(corr_bins.size-1)]).T
-    corr_bins = (corr_bins*ACQUISITION_RATE).astype(int)
+    if correlate:
+        corr_bins = np.logspace(np.log(1/ACQUISITION_RATE)/np.log(10), 0, 10)
+        corr_bins = (corr_bins*ACQUISITION_RATE).astype(int)
+        corr_view = grid.add_view(row=GRID_ROWS, col=1, row_span=GRID_ROWS, col_span=GRID_COLS,
+                                  camera='panzoom', border_color='grey')
+        corr_node = scene.Node(parent=corr_view.scene)
+        corr_node.transform = scene.transforms.LogTransform(base=(10,0,0))
+        colors = ('g', 'r')
+        if cross:
+            corr_pos_cross = np.vstack([corr_bins[:-1], np.zeros(corr_bins.size-1)]).T
+            corr_line_cross = scene.visuals.Line(pos=corr_pos_cross, parent=corr_node, color='b')
+        if auto:
+            corr_pos_auto = [np.vstack([corr_bins[:-1], np.zeros(corr_bins.size-1)]).T for _ in range(CHANNELS)]
+            corr_line_auto = [scene.visuals.Line(pos=cp, parent=corr_node, color=c) for cp, c in zip(corr_pos_auto, colors)]
+        
+        corr_gridlines = scene.GridLines(color=(1, 1, 1, 1), parent=corr_node)
     
-    corr_view = grid.add_view(row=GRID_ROWS, col=1, row_span=GRID_ROWS, col_span=GRID_COLS,
-                              camera='panzoom', border_color='grey')
-    corr_node = scene.Node(parent=corr_view.scene)
-    corr_node.transform = scene.transforms.LogTransform(base=(10,0,0))
+        corr_yax = scene.AxisWidget(orientation='left', axis_label="G(tau)")
+        grid.add_widget(corr_yax, GRID_ROWS, 0, row_span=GRID_ROWS)
+        corr_yax.link_view(corr_view)
     
-    corr_line = scene.visuals.Line(pos=corr_pos, parent=corr_node, color='g')
-    
-    corr_gridlines = scene.GridLines(color=(1, 1, 1, 1), parent=corr_node)
-
-    corr_yax = scene.AxisWidget(orientation='left', axis_label="G(tau)")
-    grid.add_widget(corr_yax, GRID_ROWS, 0, row_span=GRID_ROWS)
-    corr_yax.link_view(corr_view)
-
-    corr_xax = scene.AxisWidget(orientation='bottom', axis_label=f"log(tau) (s)", tick_label_margin=15)
-    grid.add_widget(corr_xax, 2*GRID_ROWS, 1, col_span=GRID_COLS)
-    corr_xax.link_view(corr_view)
+        corr_xax = scene.AxisWidget(orientation='bottom', axis_label=f"log(tau) (s)", tick_label_margin=15)
+        grid.add_widget(corr_xax, 2*GRID_ROWS, 1, col_span=GRID_COLS)
+        corr_xax.link_view(corr_view)
     
 
     auto_align_mutex = Lock()
@@ -175,12 +180,15 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
         nonlocal auto_align_mutex, auto_align_awaits, auto_align_start_idx, auto_align_end_idx
 
         transfer_idx = get_idx_fn()
-        
-        times = proc_buffer(buf, transfer_idx)
-        if (times[-1] - times[0]) > corr_bins[-1]:
-            corr_pos[:,1] = pcorrelate(times, times, corr_bins)
-            c_pos = corr_pos[~np.isnan(corr_pos[:,1]), :]
-            corr_line.set_data(c_pos)
+        times = [proc_buffer(buf, transfer_idx, i, CHANNELS) for i in range(CHANNELS)]
+        if all(((t[-1] - t[0]) > corr_bins[-1]) for t in times):
+            if cross:
+                corr_pos_cross[:,1] = pcorrelate(times[0], times[1], corr_bins)
+                corr_line_cross.set_data(corr_pos_cross)
+            if auto:
+                for t, cp, cl in zip(times, corr_pos_auto, corr_line_auto):
+                    cp[:,1] = pcorrelate(t, t, corr_bins)
+                    cl.set_data(cp)
             scene_canvas.update()
     
 
@@ -201,9 +209,10 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     timer.connect(update)
     timer.start()
     
-    corr_timer = app.Timer(interval=10)
-    corr_timer.connect(update_corr)
-    corr_timer.start()
+    if correlate:
+        corr_timer = app.Timer(interval=10)
+        corr_timer.connect(update_corr)
+        corr_timer.start()
     
     def update_corr_timer(t):
         if t == 0 or t == 301:
@@ -272,13 +281,14 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None):
     
     measurement_settings_seconds_input.valueChanged.connect(set_measurement_seconds)
     
-    measurement_settings_seconds_label = QLabel("Correlation update frequency (seconds)")
-    measurment_settings_correlateion_input = QSpinBox()
-    measurment_settings_correlateion_input.setRange(0, 300)
-    measurment_settings_correlateion_input.setValue(10)
-    measurement_settings_layout.addRow(measurement_settings_seconds_label, measurment_settings_correlateion_input)
-
-    measurment_settings_correlateion_input.valueChanged.connect(update_corr_timer)
+    if correlate:
+        measurement_settings_seconds_label = QLabel("Correlation update frequency (seconds)")
+        measurment_settings_correlateion_input = QSpinBox()
+        measurment_settings_correlateion_input.setRange(0, 300)
+        measurment_settings_correlateion_input.setValue(10)
+        measurement_settings_layout.addRow(measurement_settings_seconds_label, measurment_settings_correlateion_input)
+    
+        measurment_settings_correlateion_input.valueChanged.connect(update_corr_timer)
 
     # Type selection disabled when measurement is running
     measurement_toggle_button.clicked.connect(measurement_type_group.setDisabled)
