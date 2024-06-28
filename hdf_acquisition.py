@@ -9,8 +9,8 @@ processing_first_half = True
 midpoint = PLAIN_BUFFER_SIZE // 2
 current_time = 0
 
-timestamps = []
-detectors = []
+timestamps = list()
+detectors = list()
 
 acquisition = False
 
@@ -71,7 +71,7 @@ def update_callback_fn(buf, valid_idx, total_seconds):
 
         # red
         timestamps.extend([current_time] * buf[idx + 1])
-        detectors.extend([1] * buf[idx])
+        detectors.extend([1] * buf[idx+1])
 
         current_time += 1
         return True
