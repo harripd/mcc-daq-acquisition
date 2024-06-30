@@ -6,7 +6,7 @@ It just happens to be used for projects with MCC DAQ counter modules.
 
 #### 1. Install MCC DAQ Software
 
-Can be found here: http://www.mccdaq.com/Software-Downloads.aspx
+Can be found here: [https://digilent.com/reference/software/mccdaq-cd/start](https://digilent.com/reference/software/mccdaq-cd/start)
 
 #### 2. Install this Software
 
@@ -39,7 +39,17 @@ Then run the script by entering
 ```
 python scan_counter.py
 ```
+Two optional keyword tags `-a` and `-c` can be added to add online auto and cross-correlation analysis e.g.:
 
+```
+python scan_counter.py -a -c
+```
+to display both auto and corss-correlation or
+
+```
+python scan_counter.py -a
+```
+for just auto-correlation
 
 #### 3. Enjoy!
 
