@@ -151,7 +151,7 @@ def load_hdf5(filename):
 @numba.jit(nopython=True)
 def proc_csv(data, expand):
     photons = data[:, 1:].sum()
-    times, dets = np.empty((photons, ), dtype=np.int64), np.empty((photons, ), dtype=np.int32)
+    times, dets = np.empty((photons, ), dtype=np.int64), np.empty((photons, ), dtype=np.int64)
     i = 0
     if expand:
         expand_by = data[:, 1:].max()
@@ -201,7 +201,7 @@ def load_csv(filename, expand=False):
         Factor by which times have been multiplied.
 
     """
-    data = np.genfromtxt(filename, skip_header=1, delimiter=',', dtype=int)
+    data = np.genfromtxt(filename, skip_header=1, delimiter=',', dtype=np.int64)
     times, dets, expand_by = proc_csv(data, expand)
     return times, dets, expand_by
 

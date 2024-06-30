@@ -116,7 +116,7 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None,
     
     if correlate:
         corr_bins = np.logspace(np.log(1/ACQUISITION_RATE)/np.log(10), 0, 10)
-        corr_bins = (corr_bins*ACQUISITION_RATE).astype(int)
+        corr_bins = (corr_bins*ACQUISITION_RATE).astype(np.int64)
         corr_view = grid.add_view(row=GRID_ROWS, col=1, row_span=GRID_ROWS, col_span=GRID_COLS,
                                   camera='panzoom', border_color='grey')
         corr_node = scene.Node(parent=corr_view.scene)

@@ -22,13 +22,14 @@ hidden_imports = [
     "vispy.app.backends._pyqt5",
     "freetype",
     "phconvert",
+    "numba",
 ]
 
 a = Analysis(
     ['scan_counter.py'],
     # You will have to edit this line:
     # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    pathex=['C:\\Users\\Philipp\\Anaconda3\\envs\\virometer\\Lib\\site-packages'],
+    pathex=['C:\\Users\\owner\\anaconda3\\envs\\scan-counter\\Lib\\site-packages'],
     # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     binaries=[],
     datas=data_files,

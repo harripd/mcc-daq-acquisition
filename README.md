@@ -12,7 +12,13 @@ Can be found here: [https://digilent.com/reference/software/mccdaq-cd/start](htt
 
 ##### 2.a Binary Release
 
-Go to https://github.com/klockeph/mcc-daq-acquisition/releases and download a binary (.exe) file from there.
+Go to [https://github.com/klockeph/mcc-daq-acquisition/releases](https://github.com/klockeph/mcc-daq-acquisition/releases) and download zip file containing a binary (.exe) file and a config (config.yaml) file from there.
+To run, unzip, and in the command prompt navigate to the folder and enter 
+```
+scan_counter.exe
+```
+to run without on-line correlation analysis. To add auto and/or cross- correlation analysis, add `-a` and/or `-c` respectively to the above command.
+
 If you want to modify the code, don't use windows or cannot use the binary release for any other reason, follow the manual instructions below:
 
 ##### 2.b Manual Installation
@@ -31,7 +37,7 @@ pip install -r requirements.txt
 Navigate to wherever you stored this software. E.g.:
 
 ```
-cd Documents\virometer_code\
+cd Documents\mcc-dac-acquisition\
 ```
 
 Then run the script by entering

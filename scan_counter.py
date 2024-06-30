@@ -63,25 +63,20 @@ def main():
                 self.stop = False
 
             def run(self):
+                
                 while not self.stop:
                     buf[self.idx:self.idx+SAMPLES_PER_BIN*2:2] = 0
                     if np.random.poisson(0.1):
                         bins = np.zeros(SAMPLES_PER_BIN, dtype=np.int64)
                         burst_center = np.random.randint(0, SAMPLES_PER_BIN)
-                        ph_locs = np.random.normal(burst_center, scale=1e-3*ACQUISITION_RATE, size=np.random.poisson(50)).astype(np.int64)
-                        for loc in ph_locs:
-                            if loc < 0 or loc >= bins.size:
-                                continue
-                            buf[self.idx+2*loc] += 1
-                    # sinargs = np.arange(self.idx, self.idx+SAMPLES_PER_BIN) * 20*np.pi / BUFFER_SIZE
-                    # sin = np.abs(np.sin(sinargs)) * 10
-                    # sin += (np.random.rand(SAMPLES_PER_BIN) - 0.5) * 20
-                    # buf[self.idx:self.idx+SAMPLES_PER_BIN*2:2] = (sin + 250) / SAMPLES_PER_BIN
-
-                    noise = (np.random.rand(SAMPLES_PER_BIN) * 1500)
-
-                    buf[self.idx+1:self.idx+SAMPLES_PER_BIN*2+1:2] = (noise + 2000) / SAMPLES_PER_BIN
-
+                        for n in range(CHANNELS):
+                            ph_locs = np.random.normal(burst_center, scale=1e-3*ACQUISITION_RATE, size=np.random.poisson(50)).astype(np.int64)
+                            for loc in ph_locs:
+                                if loc < 0 or loc >= bins.size:
+                                    continue
+                                buf[self.idx+CHANNELS*loc+n] += 1
+                    
+                    
                     self.idx = (self.idx + SAMPLES_PER_BIN*CHANNELS) % PLAIN_BUFFER_SIZE
                     time.sleep(1 / BIN_SIZE)
 
