@@ -2,15 +2,13 @@ This software is not affiliated with MCC DAQ in any way.
 It just happens to be used for projects with MCC DAQ counter modules.
 
 
-### Windows Setup:
-
-#### 1. Install MCC DAQ Software
+# 1. Install MCC DAQ Software
 
 Can be found here: [https://digilent.com/reference/software/mccdaq-cd/start](https://digilent.com/reference/software/mccdaq-cd/start)
 
-#### 2. Install this Software
+# 2. Install this Software
 
-##### 2.a Binary Release
+## 2.a Binary Release (Windows only)
 
 Go to [https://github.com/klockeph/mcc-daq-acquisition/releases](https://github.com/klockeph/mcc-daq-acquisition/releases) and download zip file containing a binary (.exe) file and a config (config.yaml) file from there.
 To run, unzip, and in the command prompt navigate to the folder and enter 
@@ -21,7 +19,7 @@ to run without on-line correlation analysis. To add auto and/or cross- correlati
 
 If you want to modify the code, don't use windows or cannot use the binary release for any other reason, follow the manual instructions below:
 
-##### 2.b Manual Installation
+## 2.b Manual Installation
 
 Download and install anaconda from https://www.anaconda.com/download
 
@@ -45,26 +43,21 @@ Then run the script by entering
 ```
 python scan_counter.py
 ```
-Two optional keyword tags `-a` and `-c` can be added to add online auto and cross-correlation analysis e.g.:
 
-```
-python scan_counter.py -a -c
-```
-to display both auto and corss-correlation or
+A number of keyword arguments allow for further customization, currently all combinations of the following keyword arguments are valid: `-a` `-c` `-m`.
 
-```
-python scan_counter.py -a
-```
-for just auto-correlation
+Adding `-a` to the call will start the display with all auto-correlations displayed (you can turn them on in the program afterwards though). Similarly adding `-c` will start the display with all cross-correlations displayed.
 
-#### 3. Enjoy!
+Finally `-m` is not like the others, it will automatically force the program to display mock (i.e. randomly generated) data (not using the actual detectors), which is useful for testing (especially if you are testing modifications to the code).
+
+# 3. Enjoy!
 
 Press `[Space]` in the graph-window to start a measurement. Press it again to stop and save it.
 
 If you need to change any parameter, look in `config.yaml`
 
 
-#### 4. Known Errors
+# 4. Known Errors
 
 If you're getting an error that some freetype library is missing you have to install it from e.g. https://github.com/ubawurinna/freetype-windows-binaries according to https://stackoverflow.com/questions/55291132/runtime-error-freetype-library-not-found .
 
@@ -72,7 +65,7 @@ Note that this also requires Microsoft Visual C++ Redistributable für Visual St
 You can find this e.g. at https://visualstudio.microsoft.com/de/downloads/ (Under the "other" dropdown)
 
 
-#### Other Things:
+# Other Things:
 
 If you want to build an executable (after changing the script), use PyInstaller:
 https://pyinstaller.org/en/stable/
@@ -84,7 +77,7 @@ pip install pyinstaller
 pyinstaller scan_counter.spec
 ```
 
-#### License
+# License
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -5,7 +5,9 @@ import numpy as np
 from visualize_vispy_lines import get_filename
 
 import write_hdf5
-from config import *
+# from config import *
+
+from config import CHANNELS, ACQUISITION_RATE, PLAIN_BUFFER_SIZE, BUFFER_SIZE
 
 processing_first_half = True
 midpoint = PLAIN_BUFFER_SIZE // 2
@@ -22,7 +24,7 @@ acquisition = False
 def toggle_acquisition():
     global acquisition, timestamps, detectors, current_time
     acquisition = not acquisition
-    print(f"Acquisition as HDF5", "started" if acquisition else "stopped")
+    print("Acquisition as HDF5" + "started" if acquisition else "stopped")
     if not acquisition:
         # User just turned off acquisition
         if len(timestamps) == 0:

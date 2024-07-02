@@ -102,7 +102,7 @@ def gen_corr_bins(nbin, tmin, tmax, no_zero=True):
 
 
 def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None, 
-              correlate=False, cross=True, auto=True):
+              correlate=False, cross=True, auto=True, mock=False):
     colors = ('g', 'r', 'c')
     cross_colors = ('orange', 'm', 'yellow')
     if acquisition_fun is not None:
@@ -349,7 +349,7 @@ def visualize(buf, get_idx_fn, update_callback_fn, acquisition_fun=None,
     autoalign_toggle_button = QPushButton("Autoalign Axis")
     autoalign_toggle_button.setCheckable(True)
     autoalign_toggle_button.setChecked(False)
-    autoalign_toggle_button.setEnabled(has_align)
+    autoalign_toggle_button.setEnabled(has_align and not mock)
     autoalign_layout.addWidget(autoalign_toggle_button)
     
     autoalign_toggle_button.clicked.connect(lambda: toggle_auto_align(auto_align_measure_fn))
