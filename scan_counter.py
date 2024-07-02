@@ -65,7 +65,7 @@ def main():
             def run(self):
                 
                 while not self.stop:
-                    buf[self.idx:self.idx+SAMPLES_PER_BIN*2:2] = 0
+                    buf[self.idx:self.idx+SAMPLES_PER_BIN*CHANNELS] = 0
                     if np.random.poisson(0.1):
                         bins = np.zeros(SAMPLES_PER_BIN, dtype=np.int64)
                         burst_center = np.random.randint(0, SAMPLES_PER_BIN)

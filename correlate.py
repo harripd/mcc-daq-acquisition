@@ -51,6 +51,8 @@ def pnormalize(G, t, u, bins):
     return Gn
 
 
+
+
 @numba.jit(numba.float64[:](numba.int64[:], numba.int64[:], numba.int64[:]), nopython=True)
 def pcorrelate(t, u, bins):
     """Compute correlation of two arrays of discrete events (Point-process).
@@ -119,7 +121,11 @@ def pcorrelate(t, u, bins):
     G = pnormalize(G, t, u, bins)
     return G
 
-
+# ensure pcorrelate is compiled on import
+_t = np.array([2,4,6,29], dtype=np.int64)
+_bins = np.array([1, 2, 3, 4], dtype=np.int64)
+_out = pcorrelate(_t, _t, _bins)
+del _t, _bins, _out
 
 def load_hdf5(filename):
     """
@@ -235,6 +241,14 @@ def _get_mask(dets, det):
     return mask
 
 
+def process_buffers(buf, transfer_idx, ndet, dets, corr_all):
+    buf_arr = np.array(buf[:transfer_idx], dtype=np.int64)
+    times_all = None
+    if corr_all:
+        times_all = _proc_buffer_n(buf_arr, ndet)
+    times = tuple(_proc_buffer(buf_arr[det::ndet]) for det in dets)
+    return times_all, times
+
 def proc_buffer(buf, transfer_idx, offset, stride):
     buf_arr = np.array(buf[offset:transfer_idx:stride], dtype=np.int64)
     return _proc_buffer(buf_arr)
@@ -248,6 +262,27 @@ def _proc_buffer(buf):
             times[i] = t
             i += 1
     return times
+
+def proc_buffer_n(buf, transfer_idx, ndet):
+    buf_arr = np.array(buf[:transfer_idx])
+    return _proc_buffer_n(buf_arr, ndet)
+
+@numba.jit(numba.int64[:](numba.int64[:], numba.int64))
+def _proc_buffer_n(buf, ndet):
+    times = np.empty(buf.sum(), dtype=np.int64)
+    i = 0
+    for t, n in enumerate(buf):
+        tt = t // ndet
+        for _ in range(n):
+            times[i] = tt
+            i += 1
+    return times
+
+# ensure _proc_buffer is compiled on import
+_buf = np.array([0,0,3,5,0,1], dtype=np.int64)
+_out = _proc_buffer(_buf)
+_out = _proc_buffer_n(_buf, 1)
+del _buf, _out
 
 def correlate(time, clk, det=None, sort='auto', deta=None, detb=None, 
               exp_min=1e-5, exp_max=1, bins_per_decade=5, logspace=None):

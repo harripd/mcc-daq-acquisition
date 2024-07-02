@@ -2,6 +2,8 @@ import time
 
 import numpy as np
 
+from visualize_vispy_lines import get_filename
+
 import write_hdf5
 from config import *
 
@@ -31,7 +33,7 @@ def toggle_acquisition():
             np_timestamps = np.array(timestamps, dtype=np.int64)
             np_detectors = np.array(detectors, dtype=np.uint8)
             timestamps_unit = 1 / ACQUISITION_RATE
-            write_hdf5.write_file(np_timestamps, np_detectors, timestamps_unit, fname=f'measurement_{int(time.time())}')
+            write_hdf5.write_file(np_timestamps, np_detectors, timestamps_unit, fname=get_filename())
 
         # reset measurement
         timestamps = []
@@ -65,13 +67,10 @@ def update_callback_fn(buf, valid_idx, total_seconds):
             toggle_acquisition()
             return False
 
-        # green
-        timestamps.extend([current_time] * buf[idx])
-        detectors.extend([0] * buf[idx])
-
-        # red
-        timestamps.extend([current_time] * buf[idx + 1])
-        detectors.extend([1] * buf[idx+1])
+        # iterate over all channels
+        for n in range(CHANNELS):
+            timestamps.extend([current_time] * buf[idx+n])
+            detectors.extend([n] * buf[idx+n])
 
         current_time += 1
         return True
