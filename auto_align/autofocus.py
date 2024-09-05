@@ -7,9 +7,11 @@ from auto_align.ag_uc8 import AGUC8Control
     
 
 def auto_align(measure_fn, should_stop_fn):
-    # plugging in and out the usb id changes, so we just pick the first, and fail if wrong
-    # TODO: figure out how to identify the correct piezo device
-    comport = serial.tools.list_ports.comports()[0]
+    # plugging in and out the usb id changes, so we search the list for devices
+    # matching the piezo
+    comportlist = serial.tools.list_ports.comports()
+    newport_comports = [cp for cp in comportlist if ("Newport AG-UC" in cp.description) and ("Newport" == cp.manufacturer)]
+    comport = newport_comports[0]
     control = AGUC8Control(
         port=str(comport.device),
         baudrate=912600,
